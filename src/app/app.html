@@ -48,7 +48,7 @@
 
       <div class="product-grid">
         @for (product of filteredProducts(); track product.id) {
-          <article class="product-card">
+          <article class="product-card" tabindex="0" (click)="viewProduct(product)" (keyup.enter)="viewProduct(product)">
             <img [src]="product.image" [alt]="product.name" />
             <div class="product-body">
               <p>{{ product.category }}</p>
@@ -57,7 +57,9 @@
                 <strong>Rs. {{ product.price }}</strong>
                 <span>+ Rs. {{ product.shipping }} shipping</span>
               </div>
-              <button type="button" (click)="addToCart(product)">Add to cart</button>
+              <button type="button" (click)="$event.stopPropagation(); addToCart(product)">
+                Add to cart
+              </button>
             </div>
           </article>
         }
@@ -119,4 +121,53 @@
       }
     </aside>
   </div>
+
+  @if (selectedProduct(); as product) {
+    <section class="product-modal" aria-label="Product details">
+      <button
+        type="button"
+        class="modal-backdrop"
+        aria-label="Close product details"
+        (click)="closeProduct()"
+      ></button>
+
+      <article class="product-dialog">
+        <button type="button" class="close-button" aria-label="Close" (click)="closeProduct()">
+          x
+        </button>
+
+        <div class="gallery-grid">
+          @for (image of product.gallery; track image) {
+            <img [src]="image" [alt]="product.name + ' image'" />
+          }
+        </div>
+
+        <div class="detail-copy">
+          <p class="eyebrow">{{ product.category }}</p>
+          <h2>{{ product.name }}</h2>
+          <p class="detail-description">
+            Anti tarnish jewellery for simple daily styling. Replace these three photos with your
+            own product shots whenever they are ready.
+          </p>
+
+          <div class="detail-total">
+            <span>Product</span>
+            <strong>Rs. {{ product.price }}</strong>
+          </div>
+          <div class="detail-total">
+            <span>Shipping</span>
+            <strong>Rs. {{ product.shipping }}</strong>
+          </div>
+          <div class="detail-total final">
+            <span>Total per item</span>
+            <strong>Rs. {{ product.price + product.shipping }}</strong>
+          </div>
+
+          <button type="button" class="checkout-button" (click)="addToCart(product)">
+            Add to cart
+          </button>
+        </div>
+      </article>
+    </section>
+  }
 </main>

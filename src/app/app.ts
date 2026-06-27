@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 
 type Category = 'Necklaces' | 'Earrings' | 'Bracelets' | 'Bangles';
 
@@ -9,6 +9,7 @@ interface Product {
   price: number;
   shipping: number;
   image: string;
+  gallery: string[];
 }
 
 interface CartItem extends Product {
@@ -26,6 +27,11 @@ const PRODUCTS: Product[] = [
     shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=80',
+    ],
   },
   {
     id: 2,
@@ -35,6 +41,11 @@ const PRODUCTS: Product[] = [
     shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=80',
+    ],
   },
   {
     id: 3,
@@ -44,6 +55,11 @@ const PRODUCTS: Product[] = [
     shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=900&q=80',
+    ],
   },
   {
     id: 4,
@@ -53,6 +69,11 @@ const PRODUCTS: Product[] = [
     shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=900&q=80',
+    ],
   },
   {
     id: 5,
@@ -62,6 +83,11 @@ const PRODUCTS: Product[] = [
     shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=900&q=80',
+    ],
   },
   {
     id: 6,
@@ -71,6 +97,11 @@ const PRODUCTS: Product[] = [
     shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=900&q=80',
+    ],
   },
   {
     id: 7,
@@ -80,6 +111,11 @@ const PRODUCTS: Product[] = [
     shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=900&q=80',
+    ],
   },
   {
     id: 8,
@@ -89,6 +125,11 @@ const PRODUCTS: Product[] = [
     shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=80',
+    ],
   },
 ];
 
@@ -98,7 +139,7 @@ const PRODUCTS: Product[] = [
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App {
+export class App implements OnInit, OnDestroy {
   protected readonly categories: Array<Category | 'All'> = [
     'All',
     'Necklaces',
@@ -108,6 +149,7 @@ export class App {
   ];
   protected readonly products = PRODUCTS;
   protected readonly selectedCategory = signal<Category | 'All'>('All');
+  protected readonly selectedProduct = signal<Product | null>(null);
   protected readonly cart = signal<CartItem[]>([]);
   protected readonly brandName = 'Amavya';
 
@@ -128,6 +170,23 @@ export class App {
     this.cart().reduce((total, item) => total + item.shipping * item.quantity, 0),
   );
   protected readonly grandTotal = computed(() => this.subtotal() + this.shippingTotal());
+  private readonly syncProductFromUrl = (): void => {
+    const productId = Number(window.location.hash.replace('#product-', ''));
+    const product = this.products.find((item) => item.id === productId) ?? null;
+
+    this.selectedProduct.set(product);
+  };
+
+  ngOnInit(): void {
+    this.syncProductFromUrl();
+    window.addEventListener('popstate', this.syncProductFromUrl);
+    window.addEventListener('hashchange', this.syncProductFromUrl);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('popstate', this.syncProductFromUrl);
+    window.removeEventListener('hashchange', this.syncProductFromUrl);
+  }
 
   protected selectCategory(category: Category | 'All'): void {
     this.selectedCategory.set(category);
@@ -145,6 +204,29 @@ export class App {
 
       return [...items, { ...product, quantity: 1 }];
     });
+  }
+
+  protected viewProduct(product: Product): void {
+    this.selectedProduct.set(product);
+
+    if (window.location.hash !== `#product-${product.id}`) {
+      window.history.pushState({ amavyaProductModal: true }, '', `#product-${product.id}`);
+    }
+  }
+
+  protected closeProduct(): void {
+    this.selectedProduct.set(null);
+
+    if (!window.location.hash.startsWith('#product-')) {
+      return;
+    }
+
+    if (window.history.state?.amavyaProductModal) {
+      window.history.back();
+      return;
+    }
+
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
   }
 
   protected removeFromCart(productId: number): void {
