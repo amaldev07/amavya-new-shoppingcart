@@ -22,7 +22,8 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Simple everyday pieces');
     expect(compiled.textContent).toContain('Necklaces');
-    expect(compiled.textContent).toContain('Rs. 45 shipping');
+    expect(compiled.textContent).toContain('Flat Rs. 45 shipping per order');
+    expect(compiled.textContent).not.toContain('+ Rs. 45 shipping');
   });
 
   it('should open product details with three gallery images', () => {
@@ -35,6 +36,24 @@ describe('App', () => {
 
     expect(compiled.querySelector('.product-dialog')?.textContent).toContain('Lotus Pendant Necklace');
     expect(compiled.querySelectorAll('.gallery-grid img').length).toBe(3);
+  });
+
+  it('should apply one flat shipping charge for multiple items', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const addButton = compiled.querySelector<HTMLButtonElement>('.product-card button');
+
+    addButton?.click();
+    addButton?.click();
+    fixture.detectChanges();
+
+    const pageText = compiled.textContent?.replace(/\s+/g, ' ') ?? '';
+
+    expect(pageText).toContain('Rs. 210 each');
+    expect(pageText).toContain('SubtotalRs. 420');
+    expect(pageText).toContain('ShippingRs. 45');
+    expect(pageText).toContain('TotalRs. 465');
   });
 
   it('should close product details when browser back clears the product hash', (done) => {

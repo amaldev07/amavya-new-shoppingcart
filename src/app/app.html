@@ -19,7 +19,7 @@
       <p class="eyebrow">Anti tarnish jewellery</p>
       <h1>Simple everyday pieces from Amavya.</h1>
       <p class="hero-copy">
-        Pieces around Rs. 200. Rs. 45 shipping per item.
+        Pieces around Rs. 200. Flat Rs. 45 shipping per order.
       </p>
     </div>
   </section>
@@ -55,7 +55,6 @@
               <h3>{{ product.name }}</h3>
               <div class="price-row">
                 <strong>Rs. {{ product.price }}</strong>
-                <span>+ Rs. {{ product.shipping }} shipping</span>
               </div>
               <button type="button" (click)="$event.stopPropagation(); addToCart(product)">
                 Add to cart
@@ -84,7 +83,7 @@
               <img [src]="item.image" [alt]="item.name" />
               <div>
                 <strong>{{ item.name }}</strong>
-                <span>Rs. {{ item.price + item.shipping }} each</span>
+                <span>Rs. {{ item.price }} each</span>
                 <div class="quantity-controls">
                   <button type="button" aria-label="Remove one item" (click)="removeFromCart(item.id)">
                     -
@@ -156,11 +155,11 @@
           </div>
           <div class="detail-total">
             <span>Shipping</span>
-            <strong>Rs. {{ product.shipping }}</strong>
+            <strong>Rs. {{ shippingCharge }} per order</strong>
           </div>
           <div class="detail-total final">
-            <span>Total per item</span>
-            <strong>Rs. {{ product.price + product.shipping }}</strong>
+            <span>Item total</span>
+            <strong>Rs. {{ product.price }}</strong>
           </div>
 
           <button type="button" class="checkout-button" (click)="addToCart(product)">

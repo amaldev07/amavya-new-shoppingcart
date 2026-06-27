@@ -7,7 +7,6 @@ interface Product {
   name: string;
   category: Category;
   price: number;
-  shipping: number;
   image: string;
   gallery: string[];
 }
@@ -24,7 +23,6 @@ const PRODUCTS: Product[] = [
     name: 'Lotus Pendant Necklace',
     category: 'Necklaces',
     price: 210,
-    shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80',
     gallery: [
@@ -38,7 +36,6 @@ const PRODUCTS: Product[] = [
     name: 'Golden Layer Chain',
     category: 'Necklaces',
     price: 220,
-    shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=80',
     gallery: [
@@ -52,7 +49,6 @@ const PRODUCTS: Product[] = [
     name: 'Everyday Pearl Drops',
     category: 'Earrings',
     price: 190,
-    shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=80',
     gallery: [
@@ -66,7 +62,6 @@ const PRODUCTS: Product[] = [
     name: 'Minimal Hoop Earrings',
     category: 'Earrings',
     price: 200,
-    shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=900&q=80',
     gallery: [
@@ -80,7 +75,6 @@ const PRODUCTS: Product[] = [
     name: 'Charm Bracelet',
     category: 'Bracelets',
     price: 205,
-    shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=900&q=80',
     gallery: [
@@ -94,7 +88,6 @@ const PRODUCTS: Product[] = [
     name: 'Classic Cuff Bracelet',
     category: 'Bracelets',
     price: 215,
-    shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=900&q=80',
     gallery: [
@@ -108,7 +101,6 @@ const PRODUCTS: Product[] = [
     name: 'Stackable Gold Bangles',
     category: 'Bangles',
     price: 200,
-    shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=900&q=80',
     gallery: [
@@ -122,7 +114,6 @@ const PRODUCTS: Product[] = [
     name: 'Textured Daily Bangle',
     category: 'Bangles',
     price: 225,
-    shipping: SHIPPING_CHARGE,
     image:
       'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=80',
     gallery: [
@@ -151,6 +142,7 @@ export class App implements OnInit, OnDestroy {
   protected readonly selectedCategory = signal<Category | 'All'>('All');
   protected readonly selectedProduct = signal<Product | null>(null);
   protected readonly cart = signal<CartItem[]>([]);
+  protected readonly shippingCharge = SHIPPING_CHARGE;
   protected readonly brandName = 'Amavya';
 
   protected readonly filteredProducts = computed(() => {
@@ -166,9 +158,7 @@ export class App implements OnInit, OnDestroy {
   protected readonly subtotal = computed(() =>
     this.cart().reduce((total, item) => total + item.price * item.quantity, 0),
   );
-  protected readonly shippingTotal = computed(() =>
-    this.cart().reduce((total, item) => total + item.shipping * item.quantity, 0),
-  );
+  protected readonly shippingTotal = computed(() => (this.cart().length ? SHIPPING_CHARGE : 0));
   protected readonly grandTotal = computed(() => this.subtotal() + this.shippingTotal());
   private readonly syncProductFromUrl = (): void => {
     const productId = Number(window.location.hash.replace('#product-', ''));
