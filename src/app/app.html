@@ -1,0 +1,122 @@
+<main class="shop-shell">
+  <header class="brand-header">
+    <a class="brand-lockup" href="#" aria-label="Amavya home">
+      <img src="assets/amavya-logo.jpeg" alt="Amavya logo" />
+      <span>
+        <strong>{{ brandName }}</strong>
+        <small>Adorn your aura</small>
+      </span>
+    </a>
+
+    <div class="cart-pill" aria-label="Cart item count">
+      <span>{{ itemCount() }}</span>
+      <small>items</small>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Anti tarnish jewellery</p>
+      <h1>Simple everyday pieces from Amavya.</h1>
+      <p class="hero-copy">
+        Pieces around Rs. 200. Rs. 45 shipping per item.
+      </p>
+    </div>
+  </section>
+
+  <nav class="category-tabs" aria-label="Product categories">
+    @for (category of categories; track category) {
+      <button
+        type="button"
+        [class.active]="selectedCategory() === category"
+        (click)="selectCategory(category)"
+      >
+        {{ category }}
+      </button>
+    }
+  </nav>
+
+  <div class="shop-grid">
+    <section class="product-section" aria-label="Products">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Catalog</p>
+          <h2>{{ selectedCategory() }} collection</h2>
+        </div>
+        <span>{{ filteredProducts().length }} products</span>
+      </div>
+
+      <div class="product-grid">
+        @for (product of filteredProducts(); track product.id) {
+          <article class="product-card">
+            <img [src]="product.image" [alt]="product.name" />
+            <div class="product-body">
+              <p>{{ product.category }}</p>
+              <h3>{{ product.name }}</h3>
+              <div class="price-row">
+                <strong>Rs. {{ product.price }}</strong>
+                <span>+ Rs. {{ product.shipping }} shipping</span>
+              </div>
+              <button type="button" (click)="addToCart(product)">Add to cart</button>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+
+    <aside class="cart-panel" aria-label="Shopping cart">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Your cart</p>
+          <h2>Order summary</h2>
+        </div>
+        @if (cart().length) {
+          <button type="button" class="text-button" (click)="clearCart()">Clear</button>
+        }
+      </div>
+
+      @if (cart().length) {
+        <div class="cart-items">
+          @for (item of cart(); track item.id) {
+            <div class="cart-item">
+              <img [src]="item.image" [alt]="item.name" />
+              <div>
+                <strong>{{ item.name }}</strong>
+                <span>Rs. {{ item.price + item.shipping }} each</span>
+                <div class="quantity-controls">
+                  <button type="button" aria-label="Remove one item" (click)="removeFromCart(item.id)">
+                    -
+                  </button>
+                  <span>{{ item.quantity }}</span>
+                  <button type="button" aria-label="Add one item" (click)="addToCart(item)">+</button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <dl class="totals">
+          <div>
+            <dt>Subtotal</dt>
+            <dd>Rs. {{ subtotal() }}</dd>
+          </div>
+          <div>
+            <dt>Shipping</dt>
+            <dd>Rs. {{ shippingTotal() }}</dd>
+          </div>
+          <div class="grand-total">
+            <dt>Total</dt>
+            <dd>Rs. {{ grandTotal() }}</dd>
+          </div>
+        </dl>
+
+        <button type="button" class="checkout-button">Checkout</button>
+      } @else {
+        <div class="empty-cart">
+          <strong>Your cart is empty</strong>
+          <p>Add a piece from the collection to see the order total.</p>
+        </div>
+      }
+    </aside>
+  </div>
+</main>
