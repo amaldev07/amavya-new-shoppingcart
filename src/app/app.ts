@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 type Category = 'Necklaces' | 'Earrings' | 'Bracelets' | 'Bangles';
 
@@ -15,7 +16,15 @@ interface CartItem extends Product {
   quantity: number;
 }
 
+interface CustomerDetails {
+  name: string;
+  phone: string;
+  address: string;
+  note: string;
+}
+
 const SHIPPING_CHARGE = 45;
+const WHATSAPP_NUMBER = '919961768906';
 
 const PRODUCTS: Product[] = [
   {
@@ -126,7 +135,7 @@ const PRODUCTS: Product[] = [
 
 @Component({
   selector: 'app-root',
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -142,8 +151,15 @@ export class App implements OnInit, OnDestroy {
   protected readonly selectedCategory = signal<Category | 'All'>('All');
   protected readonly selectedProduct = signal<Product | null>(null);
   protected readonly cart = signal<CartItem[]>([]);
+  protected readonly checkoutOpen = signal(false);
   protected readonly shippingCharge = SHIPPING_CHARGE;
   protected readonly brandName = 'Amavya';
+  protected readonly customer: CustomerDetails = {
+    name: '',
+    phone: '',
+    address: '',
+    note: '',
+  };
 
   protected readonly filteredProducts = computed(() => {
     const category = this.selectedCategory();
@@ -225,9 +241,48 @@ export class App implements OnInit, OnDestroy {
         .map((item) => (item.id === productId ? { ...item, quantity: item.quantity - 1 } : item))
         .filter((item) => item.quantity > 0),
     );
+
+    if (!this.cart().length) {
+      this.checkoutOpen.set(false);
+    }
   }
 
   protected clearCart(): void {
     this.cart.set([]);
+    this.checkoutOpen.set(false);
+  }
+
+  protected openCheckout(): void {
+    if (this.cart().length) {
+      this.checkoutOpen.set(true);
+    }
+  }
+
+  protected placeOrderOnWhatsapp(): void {
+    const message = [
+      'Hi Amavya, I would like to place an order.',
+      '',
+      'Order details:',
+      ...this.cart().map(
+        (item) => `- ${item.name} x ${item.quantity}: Rs. ${item.price * item.quantity}`,
+      ),
+      '',
+      `Subtotal: Rs. ${this.subtotal()}`,
+      `Shipping: Rs. ${this.shippingTotal()}`,
+      `Total: Rs. ${this.grandTotal()}`,
+      '',
+      'Customer details:',
+      `Name: ${this.customer.name.trim()}`,
+      `Phone: ${this.customer.phone.trim()}`,
+      `Address: ${this.customer.address.trim()}`,
+      this.customer.note.trim() ? `Note: ${this.customer.note.trim()}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const phonePath = WHATSAPP_NUMBER ? `/${WHATSAPP_NUMBER}` : '';
+    const url = `https://wa.me${phonePath}?text=${encodeURIComponent(message)}`;
+
+    window.open(url, '_blank', 'noopener');
   }
 }

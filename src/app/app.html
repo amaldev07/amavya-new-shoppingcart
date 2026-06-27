@@ -111,7 +111,53 @@
           </div>
         </dl>
 
-        <button type="button" class="checkout-button">Checkout</button>
+        @if (checkoutOpen()) {
+          <form class="checkout-form" #checkoutForm="ngForm" (ngSubmit)="placeOrderOnWhatsapp()">
+            <label>
+              <span>Name</span>
+              <input
+                type="text"
+                name="name"
+                autocomplete="name"
+                required
+                [(ngModel)]="customer.name"
+              />
+            </label>
+
+            <label>
+              <span>Phone</span>
+              <input
+                type="tel"
+                name="phone"
+                autocomplete="tel"
+                required
+                [(ngModel)]="customer.phone"
+              />
+            </label>
+
+            <label>
+              <span>Address</span>
+              <textarea
+                name="address"
+                rows="3"
+                autocomplete="street-address"
+                required
+                [(ngModel)]="customer.address"
+              ></textarea>
+            </label>
+
+            <label>
+              <span>Note</span>
+              <textarea name="note" rows="2" [(ngModel)]="customer.note"></textarea>
+            </label>
+
+            <button type="submit" class="checkout-button" [disabled]="checkoutForm.invalid">
+              Place order on WhatsApp
+            </button>
+          </form>
+        } @else {
+          <button type="button" class="checkout-button" (click)="openCheckout()">Checkout</button>
+        }
       } @else {
         <div class="empty-cart">
           <strong>Your cart is empty</strong>

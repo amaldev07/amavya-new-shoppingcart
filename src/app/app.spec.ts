@@ -56,6 +56,35 @@ describe('App', () => {
     expect(pageText).toContain('TotalRs. 465');
   });
 
+  it('should create a WhatsApp order message from checkout details', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as unknown as {
+      products: Array<{ id: number; name: string; price: number }>;
+      customer: { name: string; phone: string; address: string; note: string };
+      addToCart(product: unknown): void;
+      placeOrderOnWhatsapp(): void;
+    };
+    const openSpy = spyOn(window, 'open');
+
+    app.addToCart(app.products[0]);
+    app.customer.name = 'Anu';
+    app.customer.phone = '9876543210';
+    app.customer.address = 'Kochi';
+    app.customer.note = '';
+    app.placeOrderOnWhatsapp();
+
+    const whatsappUrl = openSpy.calls.mostRecent().args[0] as string;
+    const decodedUrl = decodeURIComponent(whatsappUrl);
+
+    expect(decodedUrl).toContain('https://wa.me/919961768906?text=');
+    expect(decodedUrl).toContain('Lotus Pendant Necklace x 1: Rs. 210');
+    expect(decodedUrl).toContain('Shipping: Rs. 45');
+    expect(decodedUrl).toContain('Total: Rs. 255');
+    expect(decodedUrl).toContain('Name: Anu');
+    expect(decodedUrl).toContain('Phone: 9876543210');
+    expect(decodedUrl).toContain('Address: Kochi');
+  });
+
   it('should close product details when browser back clears the product hash', (done) => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
