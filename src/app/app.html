@@ -167,6 +167,19 @@
     </aside>
   </div>
 
+  <section class="contact-section" aria-label="Contact Amavya">
+    <div>
+      <p class="eyebrow">Contact us</p>
+      <h2>Need help with an order?</h2>
+    </div>
+
+    <div class="contact-links">
+      <a [href]="contactPhoneHref">{{ contactPhone }}</a>
+      <a [href]="contactEmailHref">{{ contactEmail }}</a>
+      <a [href]="contactWhatsappHref" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+  </section>
+
   @if (selectedProduct(); as product) {
     <section class="product-modal" aria-label="Product details">
       <button

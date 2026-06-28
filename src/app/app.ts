@@ -15,6 +15,8 @@ interface CustomerDetails {
 
 const SHIPPING_CHARGE = 45;
 const WHATSAPP_NUMBER = '919961768906';
+const CONTACT_PHONE = '+91 99617 68906';
+const CONTACT_EMAIL = 'support.amavya@gmail.com';
 
 @Component({
   selector: 'app-root',
@@ -37,6 +39,11 @@ export class App implements OnInit, OnDestroy {
   protected readonly checkoutOpen = signal(false);
   protected readonly shippingCharge = SHIPPING_CHARGE;
   protected readonly brandName = 'Amavya';
+  protected readonly contactPhone = CONTACT_PHONE;
+  protected readonly contactPhoneHref = `tel:${CONTACT_PHONE.replace(/\s/g, '')}`;
+  protected readonly contactEmail = CONTACT_EMAIL;
+  protected readonly contactEmailHref = `mailto:${CONTACT_EMAIL}`;
+  protected readonly contactWhatsappHref = `https://wa.me/${WHATSAPP_NUMBER}`;
   protected readonly customer: CustomerDetails = {
     name: '',
     phone: '',

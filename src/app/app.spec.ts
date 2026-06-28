@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
+import { PRODUCTS } from './products';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -26,16 +27,17 @@ describe('App', () => {
     expect(compiled.textContent).not.toContain('+ Rs. 45 shipping');
   });
 
-  it('should open product details with three gallery images', () => {
+  it('should open product details with gallery images', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
+    const firstProduct = PRODUCTS[0];
 
     compiled.querySelector<HTMLElement>('.product-card')?.click();
     fixture.detectChanges();
 
-    expect(compiled.querySelector('.product-dialog')?.textContent).toContain('Lotus Pendant Necklace');
-    expect(compiled.querySelectorAll('.gallery-grid img').length).toBe(3);
+    expect(compiled.querySelector('.product-dialog')?.textContent).toContain(firstProduct.name);
+    expect(compiled.querySelectorAll('.gallery-grid img').length).toBe(firstProduct.gallery.length);
   });
 
   it('should close product details after adding from the product popup', () => {
@@ -66,11 +68,14 @@ describe('App', () => {
     fixture.detectChanges();
 
     const pageText = compiled.textContent?.replace(/\s+/g, ' ') ?? '';
+    const firstProduct = PRODUCTS[0];
+    const subtotal = firstProduct.price * 2;
+    const total = subtotal + 45;
 
-    expect(pageText).toContain('Rs. 210 each');
-    expect(pageText).toContain('SubtotalRs. 420');
+    expect(pageText).toContain(`Rs. ${firstProduct.price} each`);
+    expect(pageText).toContain(`SubtotalRs. ${subtotal}`);
     expect(pageText).toContain('ShippingRs. 45');
-    expect(pageText).toContain('TotalRs. 465');
+    expect(pageText).toContain(`TotalRs. ${total}`);
   });
 
   it('should create a WhatsApp order message from checkout details', () => {
@@ -92,11 +97,12 @@ describe('App', () => {
 
     const whatsappUrl = openSpy.calls.mostRecent().args[0] as string;
     const decodedUrl = decodeURIComponent(whatsappUrl);
+    const firstProduct = PRODUCTS[0];
 
     expect(decodedUrl).toContain('https://wa.me/919961768906?text=');
-    expect(decodedUrl).toContain('Lotus Pendant Necklace x 1: Rs. 210');
+    expect(decodedUrl).toContain(`${firstProduct.name} x 1: Rs. ${firstProduct.price}`);
     expect(decodedUrl).toContain('Shipping: Rs. 45');
-    expect(decodedUrl).toContain('Total: Rs. 255');
+    expect(decodedUrl).toContain(`Total: Rs. ${firstProduct.price + 45}`);
     expect(decodedUrl).toContain('Name: Anu');
     expect(decodedUrl).toContain('Phone: 9876543210');
     expect(decodedUrl).toContain('Address: Kochi');
@@ -110,7 +116,7 @@ describe('App', () => {
     compiled.querySelector<HTMLElement>('.product-card')?.click();
     fixture.detectChanges();
 
-    expect(window.location.hash).toBe('#product-1');
+    expect(window.location.hash).toBe(`#product-${PRODUCTS[0].id}`);
     expect(compiled.querySelector('.product-dialog')).not.toBeNull();
 
     window.history.back();
