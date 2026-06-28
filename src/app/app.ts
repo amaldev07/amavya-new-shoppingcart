@@ -95,6 +95,11 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
+  protected addToCartAndCloseProduct(product: Product): void {
+    this.addToCart(product);
+    this.closeProduct();
+  }
+
   protected viewProduct(product: Product): void {
     this.selectedProduct.set(product);
 

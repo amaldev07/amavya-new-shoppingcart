@@ -38,6 +38,23 @@ describe('App', () => {
     expect(compiled.querySelectorAll('.gallery-grid img').length).toBe(3);
   });
 
+  it('should close product details after adding from the product popup', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    compiled.querySelector<HTMLElement>('.product-card')?.click();
+    fixture.detectChanges();
+
+    expect(compiled.querySelector('.product-dialog')).not.toBeNull();
+
+    compiled.querySelector<HTMLButtonElement>('.product-dialog .checkout-button')?.click();
+    fixture.detectChanges();
+
+    expect(compiled.querySelector('.product-dialog')).toBeNull();
+    expect(compiled.querySelector('.cart-pill span')?.textContent?.trim()).toBe('1');
+  });
+
   it('should apply one flat shipping charge for multiple items', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
