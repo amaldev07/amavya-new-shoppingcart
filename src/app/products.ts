@@ -114,4 +114,15 @@ export const PRODUCTS: Product[] = [
       'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=80',
     ],
   },
+  {
+    id: 9,
+    name: 'Pearl Flower Necklace',
+    category: 'Necklaces',
+    price: 220,
+    image: 'assets/pearl-flower-necklace/pearl-flower-necklace-1.jpg',
+    gallery: [
+      'assets/pearl-flower-necklace/pearl-flower-necklace-1.jpg',
+      'assets/pearl-flower-necklace/pearl-flower-necklace-2.jpg',
+    ],
+  },
 ];
