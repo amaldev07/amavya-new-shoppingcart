@@ -10,7 +10,7 @@ export interface Product {
 }
 
 export const PRODUCTS: Product[] = [
-  {
+  /* {
     id: 1,
     name: 'Lotus Pendant Necklace',
     category: 'Necklaces',
@@ -113,12 +113,12 @@ export const PRODUCTS: Product[] = [
       'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=80',
     ],
-  },
+  }, */
   {
     id: 9,
     name: 'Pearl Flower Necklace',
     category: 'Necklaces',
-    price: 220,
+    price: 249,
     image: 'assets/pearl-flower-necklace/pearl-flower-necklace-1.jpg',
     gallery: [
       'assets/pearl-flower-necklace/pearl-flower-necklace-1.jpg',
@@ -129,7 +129,7 @@ export const PRODUCTS: Product[] = [
     id: 10,
     name: 'Heart Sync Magnetic Necklace',
     category: 'Necklaces',
-    price: 220,
+    price: 249,
     image: 'assets/heart-sync-magnetic-necklace/heart-sync-magnetic-necklace.jpg',
     gallery: ['assets/heart-sync-magnetic-necklace/heart-sync-magnetic-necklace.jpg'],
   },
@@ -137,7 +137,7 @@ export const PRODUCTS: Product[] = [
     id: 11,
     name: 'Trio Bloom Necklace',
     category: 'Necklaces',
-    price: 220,
+    price: 199,
     image: 'assets/trio-bloom-necklace/trio-bloom-necklace.jpg',
     gallery: ['assets/trio-bloom-necklace/trio-bloom-necklace.jpg'],
   },
