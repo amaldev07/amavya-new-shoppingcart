@@ -17,6 +17,7 @@ const SHIPPING_CHARGE = 45;
 const WHATSAPP_NUMBER = '919961768906';
 const CONTACT_PHONE = '+91 99617 68906';
 const CONTACT_EMAIL = 'support.amavya@gmail.com';
+const INSTAGRAM_URL = 'https://www.instagram.com/_amavya_/';
 
 @Component({
   selector: 'app-root',
@@ -44,6 +45,7 @@ export class App implements OnInit, OnDestroy {
   protected readonly contactEmail = CONTACT_EMAIL;
   protected readonly contactEmailHref = `mailto:${CONTACT_EMAIL}`;
   protected readonly contactWhatsappHref = `https://wa.me/${WHATSAPP_NUMBER}`;
+  protected readonly instagramHref = INSTAGRAM_URL;
   protected readonly customer: CustomerDetails = {
     name: '',
     phone: '',
