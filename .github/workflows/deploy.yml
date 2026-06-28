@@ -34,10 +34,26 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Setup Firebase credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AMAVYA_SHOP }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
+
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AMAVYA_SHOP }}
-          projectId: amavya-shop
-          channelId: live
+        run: |
+          set +e
+          npx firebase-tools@15.3.1 deploy --only hosting --project amavya-shop 2>&1 | tee firebase-deploy.log
+          status=${PIPESTATUS[0]}
+
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+
+          if grep -q "is the current active version" firebase-deploy.log; then
+            echo "Firebase Hosting already has this version live; treating deploy as successful."
+            exit 0
+          fi
+
+          exit "$status"
