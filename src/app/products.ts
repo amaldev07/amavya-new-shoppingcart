@@ -131,7 +131,11 @@ export const PRODUCTS: Product[] = [
     category: 'Necklaces',
     price: 249,
     image: 'assets/heart-sync-magnetic-necklace/heart-sync-magnetic-necklace.jpg',
-    gallery: ['assets/heart-sync-magnetic-necklace/heart-sync-magnetic-necklace.jpg'],
+    gallery: [
+      'assets/heart-sync-magnetic-necklace/heart-sync-magnetic-necklace.jpg',
+      'assets/heart-sync-magnetic-necklace/heart-sync-magnetic-necklace-2.jpg',
+      'assets/heart-sync-magnetic-necklace/heart-sync-magnetic-necklace-3.jpg',
+    ],
   },
   {
     id: 11,
