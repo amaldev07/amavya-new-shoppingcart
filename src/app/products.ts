@@ -125,4 +125,20 @@ export const PRODUCTS: Product[] = [
       'assets/pearl-flower-necklace/pearl-flower-necklace-2.jpg',
     ],
   },
+  {
+    id: 10,
+    name: 'Heart Sync Magnetic Necklace',
+    category: 'Necklaces',
+    price: 220,
+    image: 'assets/heart-sync-magnetic-necklace/heart-sync-magnetic-necklace.jpg',
+    gallery: ['assets/heart-sync-magnetic-necklace/heart-sync-magnetic-necklace.jpg'],
+  },
+  {
+    id: 11,
+    name: 'Trio Bloom Necklace',
+    category: 'Necklaces',
+    price: 220,
+    image: 'assets/trio-bloom-necklace/trio-bloom-necklace.jpg',
+    gallery: ['assets/trio-bloom-necklace/trio-bloom-necklace.jpg'],
+  },
 ];
