@@ -34,29 +34,28 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AMAVYA_SHOP }}
+      - name: Check current live version
+        id: live
+        continue-on-error: true
+        run: |
+          current_hash="$(curl -fsSL https://amavya-shop.web.app/index.html | sha256sum | awk '{ print $1 }')"
+          build_hash="$(sha256sum dist/shopping-kart/browser/index.html | awk '{ print $1 }')"
+
+          if [ "$current_hash" = "$build_hash" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Deploy to Firebase Hosting
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
-          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: ${{ steps.auth.outputs.credentials_file_path }}
-        run: |
-          set +e
-          test -f "$GOOGLE_APPLICATION_CREDENTIALS"
-          npx firebase-tools@15.3.1 deploy --only hosting --project amavya-shop 2>&1 | tee firebase-deploy.log
-          status=${PIPESTATUS[0]}
+        if: steps.live.outputs.changed != 'false'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AMAVYA_SHOP }}
+          projectId: amavya-shop
+          channelId: live
 
-          if [ "$status" -eq 0 ]; then
-            exit 0
-          fi
-
-          if grep -q "is the current active version" firebase-deploy.log; then
-            echo "Firebase Hosting already has this version live; treating deploy as successful."
-            exit 0
-          fi
-
-          exit "$status"
+      - name: Skip deploy
+        if: steps.live.outputs.changed == 'false'
+        run: echo "Built app matches the current live Firebase Hosting version; skipping deploy."
