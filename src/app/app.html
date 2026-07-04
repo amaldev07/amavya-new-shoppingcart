@@ -8,19 +8,17 @@
       </span>
     </a>
 
-    <div class="cart-pill" aria-label="Cart item count">
+    <button type="button" class="cart-pill" aria-label="View cart" (click)="scrollToCart()">
       <span>{{ itemCount() }}</span>
       <small>items</small>
-    </div>
+    </button>
   </header>
 
   <section class="hero">
     <div>
       <p class="eyebrow">Anti tarnish jewellery</p>
       <h1>Simple everyday pieces from Amavya.</h1>
-      <p class="hero-copy">
-        Pieces around Rs. 200. Flat Rs. 45 shipping per order.
-      </p>
+      <p class="hero-copy">Pieces around Rs. 200. Flat Rs. 45 shipping per order.</p>
     </div>
   </section>
 
@@ -48,7 +46,12 @@
 
       <div class="product-grid">
         @for (product of filteredProducts(); track product.id) {
-          <article class="product-card" tabindex="0" (click)="viewProduct(product)" (keyup.enter)="viewProduct(product)">
+          <article
+            class="product-card"
+            tabindex="0"
+            (click)="viewProduct(product)"
+            (keyup.enter)="viewProduct(product)"
+          >
             <img [src]="product.image" [alt]="product.name" />
             <div class="product-body">
               <p>{{ product.category }}</p>
@@ -65,7 +68,7 @@
       </div>
     </section>
 
-    <aside class="cart-panel" aria-label="Shopping cart">
+    <aside #cartPanel class="cart-panel" aria-label="Shopping cart">
       <div class="section-heading">
         <div>
           <p class="eyebrow">Your cart</p>
@@ -85,11 +88,17 @@
                 <strong>{{ item.name }}</strong>
                 <span>Rs. {{ item.price }} each</span>
                 <div class="quantity-controls">
-                  <button type="button" aria-label="Remove one item" (click)="removeFromCart(item.id)">
+                  <button
+                    type="button"
+                    aria-label="Remove one item"
+                    (click)="removeFromCart(item.id)"
+                  >
                     -
                   </button>
                   <span>{{ item.quantity }}</span>
-                  <button type="button" aria-label="Add one item" (click)="addToCart(item)">+</button>
+                  <button type="button" aria-label="Add one item" (click)="addToCart(item)">
+                    +
+                  </button>
                 </div>
               </div>
             </div>

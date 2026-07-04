@@ -78,6 +78,23 @@ describe('App', () => {
     expect(pageText).toContain(`TotalRs. ${total}`);
   });
 
+  it('should scroll to the cart when the cart pill is clicked', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const scrollSpy = spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+    compiled.querySelector<HTMLButtonElement>('.product-card button')?.click();
+    fixture.detectChanges();
+
+    compiled.querySelector<HTMLButtonElement>('.cart-pill')?.click();
+
+    expect(scrollSpy).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  });
+
   it('should create a WhatsApp order message from checkout details', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance as unknown as {

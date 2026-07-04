@@ -1,4 +1,12 @@
-import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  computed,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Category, Product, PRODUCTS } from './products';
 
@@ -26,6 +34,8 @@ const INSTAGRAM_URL = 'https://www.instagram.com/_amavya_/';
   styleUrl: './app.css',
 })
 export class App implements OnInit, OnDestroy {
+  @ViewChild('cartPanel') private readonly cartPanel?: ElementRef<HTMLElement>;
+
   protected readonly categories: Array<Category | 'All'> = [
     'All',
     'Necklaces',
@@ -153,6 +163,13 @@ export class App implements OnInit, OnDestroy {
     if (this.cart().length) {
       this.checkoutOpen.set(true);
     }
+  }
+
+  protected scrollToCart(): void {
+    this.cartPanel?.nativeElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
   }
 
   protected placeOrderOnWhatsapp(): void {
