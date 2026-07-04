@@ -149,15 +149,18 @@ describe('App', () => {
     const openSpy = spyOn(window, 'open');
 
     app.addToCart(app.products[0]);
+    fixture.detectChanges();
     app.customer.name = 'Anu';
     app.customer.phone = '9876543210';
     app.customer.address = 'Kochi';
     app.customer.note = '';
     app.placeOrderOnWhatsapp();
+    fixture.detectChanges();
 
     const whatsappUrl = openSpy.calls.mostRecent().args[0] as string;
     const decodedUrl = decodeURIComponent(whatsappUrl);
     const firstProduct = PRODUCTS[0];
+    const compiled = fixture.nativeElement as HTMLElement;
 
     expect(decodedUrl).toContain('https://wa.me/919961768906?text=');
     expect(decodedUrl).toContain(`${firstProduct.name} x 1: Rs. ${firstProduct.price}`);
@@ -166,6 +169,18 @@ describe('App', () => {
     expect(decodedUrl).toContain('Name: Anu');
     expect(decodedUrl).toContain('Phone: 9876543210');
     expect(decodedUrl).toContain('Address: Kochi');
+    expect(compiled.querySelector('.cart-pill span')?.textContent?.trim()).toBe('1');
+    expect(compiled.textContent).toContain('Order message opened in WhatsApp');
+    expect(window.localStorage.getItem(cartStorageKey)).toBe(
+      JSON.stringify([{ id: firstProduct.id, quantity: 1 }]),
+    );
+
+    compiled.querySelector<HTMLButtonElement>('.sent-message-button')?.click();
+    fixture.detectChanges();
+
+    expect(compiled.querySelector('.cart-pill span')?.textContent?.trim()).toBe('0');
+    expect(compiled.textContent).not.toContain('Order message opened in WhatsApp');
+    expect(window.localStorage.getItem(cartStorageKey)).toBeNull();
   });
 
   it('should close product details when browser back clears the product hash', (done) => {

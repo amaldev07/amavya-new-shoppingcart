@@ -167,6 +167,20 @@
         } @else {
           <button type="button" class="checkout-button" (click)="openCheckout()">Checkout</button>
         }
+
+        @if (orderMessageOpened()) {
+          <div class="order-success" role="status">
+            <strong>Order message opened in WhatsApp</strong>
+            <p>After sending it there, tap below to clear this cart.</p>
+            <button
+              type="button"
+              class="sent-message-button"
+              (click)="confirmWhatsappMessageSent()"
+            >
+              I sent the message
+            </button>
+          </div>
+        }
       } @else {
         <div class="empty-cart">
           <strong>Your cart is empty</strong>

@@ -54,6 +54,7 @@ export class App implements OnInit, OnDestroy {
   protected readonly selectedProduct = signal<Product | null>(null);
   protected readonly cart = signal<CartItem[]>([]);
   protected readonly checkoutOpen = signal(false);
+  protected readonly orderMessageOpened = signal(false);
   protected readonly shippingCharge = SHIPPING_CHARGE;
   protected readonly brandName = 'Amavya';
   protected readonly contactPhone = CONTACT_PHONE;
@@ -108,6 +109,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   protected addToCart(product: Product): void {
+    this.orderMessageOpened.set(false);
     this.cart.update((items) => {
       const existing = items.find((item) => item.id === product.id);
 
@@ -166,6 +168,18 @@ export class App implements OnInit, OnDestroy {
   protected clearCart(): void {
     this.cart.set([]);
     this.checkoutOpen.set(false);
+    this.orderMessageOpened.set(false);
+    this.clearStoredCart();
+  }
+
+  protected confirmWhatsappMessageSent(): void {
+    this.cart.set([]);
+    this.checkoutOpen.set(false);
+    this.orderMessageOpened.set(false);
+    this.customer.name = '';
+    this.customer.phone = '';
+    this.customer.address = '';
+    this.customer.note = '';
     this.clearStoredCart();
   }
 
@@ -296,5 +310,6 @@ export class App implements OnInit, OnDestroy {
     const url = `https://wa.me${phonePath}?text=${encodeURIComponent(message)}`;
 
     window.open(url, '_blank', 'noopener');
+    this.orderMessageOpened.set(true);
   }
 }

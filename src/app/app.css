@@ -437,6 +437,37 @@ h1 {
   outline: none;
 }
 
+.order-success {
+  border: 1px solid rgba(35, 122, 82, 0.22);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  padding: 14px;
+  background: #edf8f1;
+  color: #24553b;
+}
+
+.order-success strong {
+  display: block;
+  color: #17442e;
+}
+
+.order-success p {
+  margin-top: 6px;
+  line-height: 1.45;
+}
+
+.sent-message-button {
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  margin-top: 12px;
+  background: #24553b;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 800;
+}
+
 .empty-cart {
   border: 1px dashed rgba(62, 24, 49, 0.2);
   border-radius: 8px;
