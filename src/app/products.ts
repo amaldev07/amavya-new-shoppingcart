@@ -149,7 +149,7 @@ export const PRODUCTS: Product[] = [
     id: 12,
     name: 'Bloom Hearts Necklace',
     category: 'Necklaces',
-    price: 249,
+    price: 219,
     image: 'assets/bloom-hearts-necklace/bloom-hearts-necklace.jpg',
     gallery: [
       'assets/bloom-hearts-necklace/bloom-hearts-necklace.jpg',
@@ -160,7 +160,7 @@ export const PRODUCTS: Product[] = [
     id: 13,
     name: 'Butterfly Charm Bracelet',
     category: 'Bracelets',
-    price: 249,
+    price: 229,
     image: 'assets/butterfly-charm-bracelet/butterfly-charm-bracelet.jpg',
     gallery: [
       'assets/butterfly-charm-bracelet/butterfly-charm-bracelet.jpg',
@@ -171,7 +171,7 @@ export const PRODUCTS: Product[] = [
     id: 14,
     name: 'Crystal Drop Charm Necklace',
     category: 'Necklaces',
-    price: 249,
+    price: 219,
     image: 'assets/crystal-drop-charm-necklace/crystal-drop-charm-necklace.jpg',
     gallery: [
       'assets/crystal-drop-charm-necklace/crystal-drop-charm-necklace.jpg',
@@ -182,7 +182,7 @@ export const PRODUCTS: Product[] = [
     id: 15,
     name: 'Crystal Heart Bracelet',
     category: 'Bracelets',
-    price: 249,
+    price: 229,
     image: 'assets/crystal-heart-bracelet/crystal-heart-bracelet.jpg',
     gallery: [
       'assets/crystal-heart-bracelet/crystal-heart-bracelet.jpg',
@@ -193,7 +193,7 @@ export const PRODUCTS: Product[] = [
     id: 16,
     name: 'Heartbeat Love Bracelet',
     category: 'Bracelets',
-    price: 249,
+    price: 229,
     image: 'assets/heartbeat-love-bracelet/heartbeat-love-bracelet.jpg',
     gallery: [
       'assets/heartbeat-love-bracelet/heartbeat-love-bracelet.jpg',
@@ -204,7 +204,7 @@ export const PRODUCTS: Product[] = [
     id: 17,
     name: 'Luxe Heart Bracelet',
     category: 'Bracelets',
-    price: 249,
+    price: 229,
     image: 'assets/luxe-heart-bracelet/luxe-heart-bracelet.jpg',
     gallery: [
       'assets/luxe-heart-bracelet/luxe-heart-bracelet.jpg',
@@ -215,7 +215,7 @@ export const PRODUCTS: Product[] = [
     id: 18,
     name: 'Rainbow Hearts Charm Necklace',
     category: 'Necklaces',
-    price: 249,
+    price: 219,
     image: 'assets/rainbow-hearts-charm-necklace/rainbow-hearts-charm-necklace.jpg',
     gallery: [
       'assets/rainbow-hearts-charm-necklace/rainbow-hearts-charm-necklace.jpg',
@@ -226,7 +226,7 @@ export const PRODUCTS: Product[] = [
     id: 19,
     name: 'Starlight Necklace',
     category: 'Necklaces',
-    price: 249,
+    price: 219,
     image: 'assets/starlight-necklace/starlight-necklace.jpg',
     gallery: [
       'assets/starlight-necklace/starlight-necklace.jpg',
@@ -237,7 +237,7 @@ export const PRODUCTS: Product[] = [
     id: 20,
     name: 'Trio Hearts Bracelet',
     category: 'Bracelets',
-    price: 249,
+    price: 229,
     image: 'assets/trio-hearts-bracelet/trio-hearts-bracelet.jpg',
     gallery: [
       'assets/trio-hearts-bracelet/trio-hearts-bracelet.jpg',
@@ -248,7 +248,7 @@ export const PRODUCTS: Product[] = [
     id: 21,
     name: 'Twin Hearts Bracelet',
     category: 'Bracelets',
-    price: 249,
+    price: 229,
     image: 'assets/twin-hearts-bracelet/twin-hearts-bracelet.jpg',
     gallery: [
       'assets/twin-hearts-bracelet/twin-hearts-bracelet.jpg',
