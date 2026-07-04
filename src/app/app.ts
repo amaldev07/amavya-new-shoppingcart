@@ -21,6 +21,12 @@ interface CustomerDetails {
   note: string;
 }
 
+interface StoredCartItem {
+  id: number;
+  quantity: number;
+}
+
+const CART_STORAGE_KEY = 'amavya-cart';
 const SHIPPING_CHARGE = 45;
 const WHATSAPP_NUMBER = '919961768906';
 const CONTACT_PHONE = '+91 99617 68906';
@@ -86,6 +92,7 @@ export class App implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
+    this.loadCart();
     this.syncProductFromUrl();
     window.addEventListener('popstate', this.syncProductFromUrl);
     window.addEventListener('hashchange', this.syncProductFromUrl);
@@ -112,6 +119,7 @@ export class App implements OnInit, OnDestroy {
 
       return [...items, { ...product, quantity: 1 }];
     });
+    this.saveCart();
   }
 
   protected addToCartAndCloseProduct(product: Product): void {
@@ -148,6 +156,7 @@ export class App implements OnInit, OnDestroy {
         .map((item) => (item.id === productId ? { ...item, quantity: item.quantity - 1 } : item))
         .filter((item) => item.quantity > 0),
     );
+    this.saveCart();
 
     if (!this.cart().length) {
       this.checkoutOpen.set(false);
@@ -157,6 +166,7 @@ export class App implements OnInit, OnDestroy {
   protected clearCart(): void {
     this.cart.set([]);
     this.checkoutOpen.set(false);
+    this.clearStoredCart();
   }
 
   protected openCheckout(): void {
@@ -170,6 +180,94 @@ export class App implements OnInit, OnDestroy {
       behavior: 'smooth',
       block: 'start',
     });
+  }
+
+  private loadCart(): void {
+    const storedItems = this.readStoredCart();
+
+    if (!storedItems.length) {
+      return;
+    }
+
+    const cartItems = storedItems
+      .map((storedItem) => {
+        const product = this.products.find((item) => item.id === storedItem.id);
+
+        return product ? { ...product, quantity: storedItem.quantity } : null;
+      })
+      .filter((item): item is CartItem => item !== null);
+
+    this.cart.set(cartItems);
+
+    if (cartItems.length !== storedItems.length) {
+      this.saveCart();
+    }
+  }
+
+  private readStoredCart(): StoredCartItem[] {
+    try {
+      const storedCart = window.localStorage.getItem(CART_STORAGE_KEY);
+
+      if (!storedCart) {
+        return [];
+      }
+
+      const parsedCart = JSON.parse(storedCart) as unknown;
+
+      if (!Array.isArray(parsedCart)) {
+        return [];
+      }
+
+      return parsedCart
+        .map((item) => {
+          if (
+            typeof item !== 'object' ||
+            item === null ||
+            !('id' in item) ||
+            !('quantity' in item)
+          ) {
+            return null;
+          }
+
+          const id = Number(item.id);
+          const quantity = Number(item.quantity);
+
+          if (!Number.isInteger(id) || !Number.isInteger(quantity) || quantity <= 0) {
+            return null;
+          }
+
+          return { id, quantity };
+        })
+        .filter((item): item is StoredCartItem => item !== null);
+    } catch {
+      return [];
+    }
+  }
+
+  private saveCart(): void {
+    const storedItems = this.cart().map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+    }));
+
+    if (!storedItems.length) {
+      this.clearStoredCart();
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(storedItems));
+    } catch {
+      // Cart persistence is a convenience; checkout should still work if storage is unavailable.
+    }
+  }
+
+  private clearStoredCart(): void {
+    try {
+      window.localStorage.removeItem(CART_STORAGE_KEY);
+    } catch {
+      // Ignore storage failures so cart actions still work.
+    }
   }
 
   protected placeOrderOnWhatsapp(): void {

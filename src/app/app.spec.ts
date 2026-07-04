@@ -3,8 +3,11 @@ import { App } from './app';
 import { PRODUCTS } from './products';
 
 describe('App', () => {
+  const cartStorageKey = 'amavya-cart';
+
   beforeEach(async () => {
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    window.localStorage.removeItem(cartStorageKey);
 
     await TestBed.configureTestingModule({
       imports: [App],
@@ -76,6 +79,46 @@ describe('App', () => {
     expect(pageText).toContain(`SubtotalRs. ${subtotal}`);
     expect(pageText).toContain('ShippingRs. 45');
     expect(pageText).toContain(`TotalRs. ${total}`);
+  });
+
+  it('should save cart items to local storage', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    compiled.querySelector<HTMLButtonElement>('.product-card button')?.click();
+    compiled.querySelector<HTMLButtonElement>('.product-card button')?.click();
+
+    expect(window.localStorage.getItem(cartStorageKey)).toBe(
+      JSON.stringify([{ id: PRODUCTS[0].id, quantity: 2 }]),
+    );
+  });
+
+  it('should restore saved cart items from local storage', () => {
+    window.localStorage.setItem(
+      cartStorageKey,
+      JSON.stringify([{ id: PRODUCTS[0].id, quantity: 2 }]),
+    );
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const pageText = compiled.textContent?.replace(/\s+/g, ' ') ?? '';
+
+    expect(compiled.querySelector('.cart-pill span')?.textContent?.trim()).toBe('2');
+    expect(pageText).toContain(PRODUCTS[0].name);
+    expect(pageText).toContain(`Rs. ${PRODUCTS[0].price} each`);
+  });
+
+  it('should clear saved cart items when the cart is cleared', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    compiled.querySelector<HTMLButtonElement>('.product-card button')?.click();
+    fixture.detectChanges();
+    compiled.querySelector<HTMLButtonElement>('.text-button')?.click();
+
+    expect(window.localStorage.getItem(cartStorageKey)).toBeNull();
   });
 
   it('should scroll to the cart when the cart pill is clicked', () => {
