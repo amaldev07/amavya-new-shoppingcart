@@ -1,0 +1,189 @@
+<main class="admin-shell">
+  <header class="admin-header">
+    <a href="/" class="brand-link">Amavya</a>
+    @if (user()) {
+      <button type="button" class="secondary-button" (click)="signOut()">Sign out</button>
+    }
+  </header>
+
+  @if (loading()) {
+    <section class="admin-panel">
+      <p>Loading admin...</p>
+    </section>
+  } @else if (!user()) {
+    <section class="login-panel">
+      <h1>Admin login</h1>
+      <form (ngSubmit)="signIn()">
+        <label>
+          <span>Email</span>
+          <input
+            type="email"
+            name="email"
+            autocomplete="email"
+            required
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+          />
+        </label>
+        <label>
+          <span>Password</span>
+          <input
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            required
+            [ngModel]="password()"
+            (ngModelChange)="password.set($event)"
+          />
+        </label>
+        <button type="submit" class="primary-button">Sign in</button>
+      </form>
+      @if (errorMessage()) {
+        <p class="form-message error">{{ errorMessage() }}</p>
+      }
+    </section>
+  } @else {
+    <div class="admin-grid">
+      <section class="admin-panel product-form-panel">
+        <div class="section-title">
+          <div>
+            <p>Catalog</p>
+            <h1>{{ isEditing() ? 'Edit product' : 'Add product' }}</h1>
+          </div>
+          @if (isEditing()) {
+            <button type="button" class="secondary-button" (click)="resetDraft()">New</button>
+          }
+        </div>
+
+        <form class="product-form" (ngSubmit)="saveProduct()">
+          <label>
+            <span>Name</span>
+            <input
+              type="text"
+              name="name"
+              required
+              [ngModel]="draft().name"
+              (ngModelChange)="updateDraft({ name: $event })"
+            />
+          </label>
+
+          <div class="form-row">
+            <label>
+              <span>Category</span>
+              <select
+                name="category"
+                required
+                [ngModel]="draft().category"
+                (ngModelChange)="updateDraft({ category: $event })"
+              >
+                @for (category of categories; track category) {
+                  <option [ngValue]="category">{{ category }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              <span>Price</span>
+              <input
+                type="number"
+                name="price"
+                min="1"
+                required
+                [ngModel]="draft().price"
+                (ngModelChange)="updateDraft({ price: $event })"
+              />
+            </label>
+          </div>
+
+          <label>
+            <span>Description</span>
+            <textarea
+              name="description"
+              rows="4"
+              [ngModel]="draft().description"
+              (ngModelChange)="updateDraft({ description: $event })"
+            ></textarea>
+          </label>
+
+          <label>
+            <span>Product images</span>
+            <input
+              type="file"
+              name="images"
+              accept="image/*"
+              multiple
+              (change)="onFilesSelected($event)"
+            />
+          </label>
+
+          @if (draft().gallery.length) {
+            <div class="image-preview-grid">
+              @for (image of draft().gallery; track image) {
+                <img [src]="image" alt="Existing product image" />
+              }
+            </div>
+          }
+
+          @if (selectedFiles().length) {
+            <p class="file-count">{{ selectedFiles().length }} image(s) selected</p>
+          }
+
+          <label class="checkbox-row">
+            <input
+              type="checkbox"
+              name="active"
+              [ngModel]="draft().active"
+              (ngModelChange)="updateDraft({ active: $event })"
+            />
+            <span>Show this product in the shop</span>
+          </label>
+
+          <button type="submit" class="primary-button" [disabled]="saving()">
+            {{ saving() ? 'Saving...' : 'Save product' }}
+          </button>
+        </form>
+
+        @if (successMessage()) {
+          <p class="form-message success">{{ successMessage() }}</p>
+        }
+        @if (errorMessage()) {
+          <p class="form-message error">{{ errorMessage() }}</p>
+        }
+      </section>
+
+      <section class="admin-panel">
+        <div class="section-title">
+          <div>
+            <p>Products</p>
+            <h2>{{ products().length }} items</h2>
+          </div>
+        </div>
+
+        <div class="admin-product-list">
+          @for (product of products(); track product.id) {
+            <article class="admin-product">
+              <img [src]="product.image" [alt]="product.name" />
+              <div>
+                <strong>{{ product.name }}</strong>
+                <span>{{ product.category }} / Rs. {{ product.price }}</span>
+                <small>{{ product.active ? 'Visible' : 'Hidden' }}</small>
+              </div>
+              <div class="product-actions">
+                <button type="button" class="secondary-button" (click)="editProduct(product)">
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="setActive(product, !product.active)"
+                >
+                  {{ product.active ? 'Hide' : 'Show' }}
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    </div>
+  }
+</main>

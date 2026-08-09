@@ -1,3 +1,6 @@
+@if (isAdminRoute()) {
+  <app-admin />
+} @else {
 <main class="shop-shell">
   <header class="brand-header">
     <a class="brand-lockup" href="#" aria-label="Amavya home">
@@ -253,3 +256,4 @@
     </section>
   }
 </main>
+}

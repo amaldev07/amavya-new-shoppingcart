@@ -1,0 +1,279 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f7f2ed;
+  color: #2a1724;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.admin-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 18px 0 40px;
+}
+
+.admin-header,
+.admin-grid,
+.form-row,
+.section-title,
+.admin-product,
+.product-actions {
+  display: flex;
+}
+
+.admin-header {
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.brand-link {
+  color: inherit;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.admin-grid {
+  align-items: flex-start;
+  gap: 22px;
+}
+
+.product-form-panel {
+  flex: 0 0 min(480px, 100%);
+}
+
+.admin-panel,
+.login-panel {
+  border: 1px solid rgba(62, 24, 49, 0.12);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 42px rgba(62, 24, 49, 0.08);
+}
+
+.admin-panel {
+  min-width: 0;
+  padding: 18px;
+}
+
+.login-panel {
+  width: min(430px, 100%);
+  margin: 90px auto 0;
+  padding: 24px;
+}
+
+.login-panel form,
+.product-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.section-title {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-title p {
+  margin: 0 0 7px;
+  color: #b99358;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  color: #35152b;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+}
+
+label span,
+.file-count {
+  color: #6e4a5f;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid rgba(62, 24, 49, 0.18);
+  border-radius: 6px;
+  background: #fffaf5;
+  color: #2a1724;
+  padding: 11px 12px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #b99358;
+  box-shadow: 0 0 0 3px rgba(185, 147, 88, 0.18);
+  outline: none;
+}
+
+.form-row {
+  gap: 12px;
+}
+
+.form-row label {
+  flex: 1;
+}
+
+.checkbox-row {
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+}
+
+.checkbox-row input {
+  width: 18px;
+  height: 18px;
+}
+
+.primary-button,
+.secondary-button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.primary-button {
+  background: #b99358;
+  color: #24110d;
+}
+
+.primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.secondary-button {
+  border: 1px solid rgba(62, 24, 49, 0.16);
+  background: #fff;
+  color: #3b182f;
+  padding: 0 14px;
+}
+
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.image-preview-grid img {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.file-count {
+  margin: 0;
+}
+
+.form-message {
+  border-radius: 6px;
+  margin: 14px 0 0;
+  padding: 12px;
+  font-weight: 700;
+}
+
+.form-message.success {
+  background: #edf8f1;
+  color: #24553b;
+}
+
+.form-message.error {
+  background: #fdeeed;
+  color: #8c2622;
+}
+
+.admin-product-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.admin-product {
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(62, 24, 49, 0.1);
+  padding-bottom: 12px;
+}
+
+.admin-product img {
+  width: 68px;
+  height: 68px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.admin-product div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-product strong,
+.admin-product span,
+.admin-product small {
+  display: block;
+}
+
+.admin-product span,
+.admin-product small {
+  margin-top: 3px;
+  color: #815f72;
+}
+
+.product-actions {
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .admin-grid,
+  .form-row {
+    display: grid;
+  }
+
+  .product-form-panel {
+    flex-basis: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .admin-shell {
+    width: min(1180px, calc(100% - 24px));
+  }
+
+  .admin-product {
+    align-items: flex-start;
+  }
+
+  .product-actions {
+    display: grid;
+  }
+}

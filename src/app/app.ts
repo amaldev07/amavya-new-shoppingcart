@@ -5,9 +5,12 @@ import {
   OnInit,
   ViewChild,
   computed,
+  inject,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AdminComponent } from './admin.component';
+import { ProductService } from './product.service';
 import { Category, Product, PRODUCTS } from './products';
 
 interface CartItem extends Product {
@@ -35,12 +38,13 @@ const INSTAGRAM_URL = 'https://www.instagram.com/_amavya_/';
 
 @Component({
   selector: 'app-root',
-  imports: [FormsModule],
+  imports: [FormsModule, AdminComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App implements OnInit, OnDestroy {
   @ViewChild('cartPanel') private readonly cartPanel?: ElementRef<HTMLElement>;
+  private readonly productService = inject(ProductService);
 
   protected readonly categories: Array<Category | 'All'> = [
     'All',
@@ -49,7 +53,9 @@ export class App implements OnInit, OnDestroy {
     'Bracelets',
     'Bangles',
   ];
-  protected readonly products = PRODUCTS;
+  protected readonly products = signal<Product[]>(PRODUCTS);
+  protected readonly productsLoadFailed = signal(false);
+  protected readonly isAdminRoute = signal(false);
   protected readonly selectedCategory = signal<Category | 'All'>('All');
   protected readonly selectedProduct = signal<Product | null>(null);
   protected readonly cart = signal<CartItem[]>([]);
@@ -73,8 +79,8 @@ export class App implements OnInit, OnDestroy {
   protected readonly filteredProducts = computed(() => {
     const category = this.selectedCategory();
     return category === 'All'
-      ? this.products
-      : this.products.filter((product) => product.category === category);
+      ? this.products()
+      : this.products().filter((product) => product.category === category);
   });
 
   protected readonly itemCount = computed(() =>
@@ -87,22 +93,47 @@ export class App implements OnInit, OnDestroy {
   protected readonly grandTotal = computed(() => this.subtotal() + this.shippingTotal());
   private readonly syncProductFromUrl = (): void => {
     const productId = Number(window.location.hash.replace('#product-', ''));
-    const product = this.products.find((item) => item.id === productId) ?? null;
+    const product = this.products().find((item) => item.id === productId) ?? null;
 
     this.selectedProduct.set(product);
   };
 
   ngOnInit(): void {
+    this.syncRoute();
+    void this.loadProducts();
     this.loadCart();
     this.syncProductFromUrl();
     window.addEventListener('popstate', this.syncProductFromUrl);
     window.addEventListener('hashchange', this.syncProductFromUrl);
+    window.addEventListener('popstate', this.syncRoute);
+  }
+
+  private async loadProducts(): Promise<void> {
+    try {
+      const products = await this.productService.getActiveProducts();
+
+      if (!products.length) {
+        return;
+      }
+
+      this.products.set(products);
+      this.loadCart();
+      this.syncProductFromUrl();
+    } catch (error) {
+      console.error('Unable to load Firebase products. Using local fallback products.', error);
+      this.productsLoadFailed.set(true);
+    }
   }
 
   ngOnDestroy(): void {
     window.removeEventListener('popstate', this.syncProductFromUrl);
     window.removeEventListener('hashchange', this.syncProductFromUrl);
+    window.removeEventListener('popstate', this.syncRoute);
   }
+
+  private readonly syncRoute = (): void => {
+    this.isAdminRoute.set(window.location.pathname.startsWith('/admin'));
+  };
 
   protected selectCategory(category: Category | 'All'): void {
     this.selectedCategory.set(category);
@@ -205,7 +236,7 @@ export class App implements OnInit, OnDestroy {
 
     const cartItems = storedItems
       .map((storedItem) => {
-        const product = this.products.find((item) => item.id === storedItem.id);
+        const product = this.products().find((item) => item.id === storedItem.id);
 
         return product ? { ...product, quantity: storedItem.quantity } : null;
       })
