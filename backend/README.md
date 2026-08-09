@@ -42,9 +42,9 @@ On Windows:
 Create a Web Service from this repo.
 
 ```text
+Language: Docker
 Root Directory: backend
-Build Command: chmod +x ./gradlew && ./gradlew clean build -x test
-Start Command: java -jar build/libs/*.jar
+Dockerfile Path: ./Dockerfile
 ```
 
 Environment variables:
