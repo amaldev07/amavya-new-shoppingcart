@@ -35,6 +35,11 @@ On Windows:
 
 ```powershell
 .\gradlew.bat bootRun
+
+from cmd
+ShoppingCart\backend
+gradlew.bat clean build
+gradlew.bat bootRun
 ```
 
 ## Render

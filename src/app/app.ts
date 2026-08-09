@@ -60,6 +60,8 @@ export class App implements OnInit, OnDestroy {
   protected readonly cart = signal<CartItem[]>([]);
   protected readonly checkoutOpen = signal(false);
   protected readonly orderMessageOpened = signal(false);
+  protected readonly checkoutProcessing = signal(false);
+  protected readonly checkoutError = signal('');
   protected readonly shippingCharge = SHIPPING_CHARGE;
   protected readonly brandName = 'Amavya';
   protected readonly contactPhone = CONTACT_PHONE;
@@ -100,7 +102,6 @@ export class App implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.syncRoute();
     void this.loadProducts();
-    this.loadCart();
     this.syncProductFromUrl();
     window.addEventListener('popstate', this.syncProductFromUrl);
     window.addEventListener('hashchange', this.syncProductFromUrl);
@@ -135,6 +136,13 @@ export class App implements OnInit, OnDestroy {
 
   protected addToCart(product: Product): void {
     this.orderMessageOpened.set(false);
+    this.checkoutError.set('');
+
+    if (!this.canAddToCart(product)) {
+      this.checkoutError.set('No more stock available for this product.');
+      return;
+    }
+
     this.cart.update((items) => {
       const existing = items.find((item) => item.id === product.id);
 
@@ -147,6 +155,14 @@ export class App implements OnInit, OnDestroy {
       return [...items, { ...product, quantity: 1 }];
     });
     this.saveCart();
+  }
+
+  protected cartQuantityFor(productId: number): number {
+    return this.cart().find((item) => item.id === productId)?.quantity ?? 0;
+  }
+
+  protected canAddToCart(product: Product): boolean {
+    return this.cartQuantityFor(product.id) < product.stockQuantity;
   }
 
   protected addToCartAndCloseProduct(product: Product): void {
@@ -194,6 +210,7 @@ export class App implements OnInit, OnDestroy {
     this.cart.set([]);
     this.checkoutOpen.set(false);
     this.orderMessageOpened.set(false);
+    this.checkoutError.set('');
     this.clearStoredCart();
   }
 
@@ -205,6 +222,7 @@ export class App implements OnInit, OnDestroy {
     this.customer.phone = '';
     this.customer.address = '';
     this.customer.note = '';
+    void this.loadProducts();
     this.clearStoredCart();
   }
 
@@ -232,7 +250,9 @@ export class App implements OnInit, OnDestroy {
       .map((storedItem) => {
         const product = this.products().find((item) => item.id === storedItem.id);
 
-        return product ? { ...product, quantity: storedItem.quantity } : null;
+        return product
+          ? { ...product, quantity: Math.min(storedItem.quantity, product.stockQuantity) }
+          : null;
       })
       .filter((item): item is CartItem => item !== null);
 
@@ -309,7 +329,27 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  protected placeOrderOnWhatsapp(): void {
+  protected async placeOrderOnWhatsapp(): Promise<void> {
+    this.checkoutError.set('');
+    this.checkoutProcessing.set(true);
+
+    try {
+      await this.productService.completeCheckout(
+        this.cart().map((item) => ({
+          id: item.id,
+          quantity: item.quantity,
+        })),
+      );
+    } catch (error) {
+      this.checkoutError.set(
+        error instanceof Error
+          ? error.message
+          : 'Unable to update product quantity. Please try again.',
+      );
+      this.checkoutProcessing.set(false);
+      return;
+    }
+
     const message = [
       'Hi Amavya, I would like to place an order.',
       '',
@@ -336,5 +376,6 @@ export class App implements OnInit, OnDestroy {
 
     window.open(url, '_blank', 'noopener');
     this.orderMessageOpened.set(true);
+    this.checkoutProcessing.set(false);
   }
 }

@@ -62,8 +62,12 @@
               <div class="price-row">
                 <strong>Rs. {{ product.price }}</strong>
               </div>
-              <button type="button" (click)="$event.stopPropagation(); addToCart(product)">
-                Add to cart
+              <button
+                type="button"
+                [disabled]="!canAddToCart(product)"
+                (click)="$event.stopPropagation(); addToCart(product)"
+              >
+                {{ canAddToCart(product) ? 'Add to cart' : 'Out of stock' }}
               </button>
             </div>
           </article>
@@ -99,7 +103,12 @@
                     -
                   </button>
                   <span>{{ item.quantity }}</span>
-                  <button type="button" aria-label="Add one item" (click)="addToCart(item)">
+                  <button
+                    type="button"
+                    aria-label="Add one item"
+                    [disabled]="!canAddToCart(item)"
+                    (click)="addToCart(item)"
+                  >
                     +
                   </button>
                 </div>
@@ -163,12 +172,20 @@
               <textarea name="note" rows="2" [(ngModel)]="customer.note"></textarea>
             </label>
 
-            <button type="submit" class="checkout-button" [disabled]="checkoutForm.invalid">
-              Place order on WhatsApp
+            <button
+              type="submit"
+              class="checkout-button"
+              [disabled]="checkoutForm.invalid || checkoutProcessing()"
+            >
+              {{ checkoutProcessing() ? 'Placing order...' : 'Place order on WhatsApp' }}
             </button>
           </form>
         } @else {
           <button type="button" class="checkout-button" (click)="openCheckout()">Checkout</button>
+        }
+
+        @if (checkoutError()) {
+          <p class="form-message error">{{ checkoutError() }}</p>
         }
 
         @if (orderMessageOpened()) {
@@ -248,8 +265,13 @@
             <strong>Rs. {{ product.price }}</strong>
           </div>
 
-          <button type="button" class="checkout-button" (click)="addToCartAndCloseProduct(product)">
-            Add to cart
+          <button
+            type="button"
+            class="checkout-button"
+            [disabled]="!canAddToCart(product)"
+            (click)="addToCartAndCloseProduct(product)"
+          >
+            {{ canAddToCart(product) ? 'Add to cart' : 'Out of stock' }}
           </button>
         </div>
       </article>

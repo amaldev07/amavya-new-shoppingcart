@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { backendConfig } from '../environments/backend.config';
 import { STORE_ID, firebaseConfig, hasFirebaseConfig } from '../environments/firebase.config';
 import { Category, Product } from './products';
 
@@ -28,11 +29,32 @@ export class ProductService {
       .sort((first, second) => first.id - second.id);
   }
 
+  async completeCheckout(items: Array<{ id: number; quantity: number }>): Promise<void> {
+    const response = await fetch(`${backendConfig.apiBaseUrl}/api/orders/checkout`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        items: items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+        })),
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(errorBody || 'Checkout failed.');
+    }
+  }
+
   private toProduct(data: Record<string, unknown>, documentId: string): Product | null {
     const id = Number(data['id'] ?? documentId);
     const name = String(data['name'] ?? '').trim();
     const category = data['category'];
     const price = Number(data['price']);
+    const stockQuantity = Number(data['quantity'] ?? 1);
     const image = String(data['image'] ?? '').trim();
     const gallery = Array.isArray(data['gallery'])
       ? data['gallery'].map((item) => String(item)).filter(Boolean)
@@ -44,6 +66,8 @@ export class ProductService {
       typeof category !== 'string' ||
       !CATEGORIES.has(category as Category) ||
       !Number.isFinite(price) ||
+      !Number.isInteger(stockQuantity) ||
+      stockQuantity <= 0 ||
       !image
     ) {
       return null;
@@ -56,6 +80,7 @@ export class ProductService {
       price,
       image,
       gallery: gallery.length ? gallery : [image],
+      stockQuantity,
     } as Product;
   }
 }

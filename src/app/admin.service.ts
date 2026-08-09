@@ -18,6 +18,7 @@ export interface ProductDraft {
   name: string;
   category: Category;
   price: number | null;
+  quantity: number | null;
   description: string;
   active: boolean;
   image: string;
@@ -86,6 +87,7 @@ export class AdminService {
     const app = await this.getApp();
     const db = getFirestore(app);
     const id = draft.id ?? Date.now();
+    const quantity = Number(draft.quantity ?? 1);
     const uploadedImages: string[] = [];
     const uploadedPublicIds: string[] = [];
 
@@ -107,6 +109,10 @@ export class AdminService {
       throw new Error('Product needs at least one image.');
     }
 
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      throw new Error('Product quantity must be 0 or more.');
+    }
+
     await setDoc(
       doc(db, 'products', String(id)),
       {
@@ -115,11 +121,12 @@ export class AdminService {
         name: draft.name.trim(),
         category: draft.category,
         price: Number(draft.price),
+        quantity,
         description: draft.description.trim(),
         image,
         gallery: gallery.length ? gallery : [image],
         cloudinaryPublicIds,
-        active: draft.active,
+        active: draft.active && quantity > 0,
         sortOrder: draft.sortOrder ?? id,
         updatedAt: serverTimestamp(),
         createdAt: serverTimestamp(),
@@ -131,6 +138,10 @@ export class AdminService {
   async setProductActive(product: AdminProduct, active: boolean): Promise<void> {
     const { doc, getFirestore, serverTimestamp, updateDoc } = await import('firebase/firestore');
     const db = getFirestore(await this.getApp());
+
+    if (active && product.stockQuantity <= 0) {
+      throw new Error('Add quantity before showing this product.');
+    }
 
     await updateDoc(doc(db, 'products', String(product.id)), {
       active,
@@ -234,6 +245,7 @@ export class AdminService {
     const name = String(data['name'] ?? '').trim();
     const category = data['category'] as Category;
     const price = Number(data['price']);
+    const stockQuantity = Number(data['quantity'] ?? 1);
     const image = String(data['image'] ?? '').trim();
     const gallery = Array.isArray(data['gallery'])
       ? data['gallery'].map((item) => String(item)).filter(Boolean)
@@ -242,7 +254,14 @@ export class AdminService {
       ? data['cloudinaryPublicIds'].map((item) => String(item)).filter(Boolean)
       : [];
 
-    if (!Number.isInteger(id) || !name || !Number.isFinite(price) || !image) {
+    if (
+      !Number.isInteger(id) ||
+      !name ||
+      !Number.isFinite(price) ||
+      !Number.isInteger(stockQuantity) ||
+      stockQuantity < 0 ||
+      !image
+    ) {
       return null;
     }
 
@@ -253,6 +272,7 @@ export class AdminService {
       price,
       image,
       gallery: gallery.length ? gallery : [image],
+      stockQuantity,
       active: data['active'] !== false,
       cloudinaryPublicIds,
       description: String(data['description'] ?? ''),

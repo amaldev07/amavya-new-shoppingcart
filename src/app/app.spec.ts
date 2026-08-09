@@ -16,6 +16,7 @@ describe('App', () => {
         'https://res.cloudinary.com/akw21id4/image/upload/test-necklace.jpg',
         'https://res.cloudinary.com/akw21id4/image/upload/test-necklace-2.jpg',
       ],
+      stockQuantity: 5,
     },
   ];
 
@@ -30,11 +31,24 @@ describe('App', () => {
           provide: ProductService,
           useValue: {
             getActiveProducts: () => Promise.resolve(PRODUCTS),
+            completeCheckout: () => Promise.resolve(),
           },
         },
       ],
     }).compileComponents();
   });
+
+  async function renderApp(): Promise<{ fixture: ReturnType<typeof TestBed.createComponent<App>>; compiled: HTMLElement }> {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    return {
+      fixture,
+      compiled: fixture.nativeElement as HTMLElement,
+    };
+  }
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(App);
@@ -42,20 +56,16 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render the brand storefront', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+  it('should render the brand storefront', async () => {
+    const { compiled } = await renderApp();
     expect(compiled.querySelector('h1')?.textContent).toContain('Simple everyday pieces');
     expect(compiled.textContent).toContain('Necklaces');
     expect(compiled.textContent).toContain('Flat Rs. 45 shipping per order');
     expect(compiled.textContent).not.toContain('+ Rs. 45 shipping');
   });
 
-  it('should open product details with gallery images', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+  it('should open product details with gallery images', async () => {
+    const { fixture, compiled } = await renderApp();
     const firstProduct = PRODUCTS[0];
 
     compiled.querySelector<HTMLElement>('.product-card')?.click();
@@ -65,10 +75,8 @@ describe('App', () => {
     expect(compiled.querySelectorAll('.gallery-grid img').length).toBe(firstProduct.gallery.length);
   });
 
-  it('should close product details after adding from the product popup', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+  it('should close product details after adding from the product popup', async () => {
+    const { fixture, compiled } = await renderApp();
 
     compiled.querySelector<HTMLElement>('.product-card')?.click();
     fixture.detectChanges();
@@ -82,10 +90,8 @@ describe('App', () => {
     expect(compiled.querySelector('.cart-pill span')?.textContent?.trim()).toBe('1');
   });
 
-  it('should apply one flat shipping charge for multiple items', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+  it('should apply one flat shipping charge for multiple items', async () => {
+    const { fixture, compiled } = await renderApp();
     const addButton = compiled.querySelector<HTMLButtonElement>('.product-card button');
 
     addButton?.click();
@@ -103,10 +109,8 @@ describe('App', () => {
     expect(pageText).toContain(`TotalRs. ${total}`);
   });
 
-  it('should save cart items to local storage', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+  it('should save cart items to local storage', async () => {
+    const { compiled } = await renderApp();
 
     compiled.querySelector<HTMLButtonElement>('.product-card button')?.click();
     compiled.querySelector<HTMLButtonElement>('.product-card button')?.click();
@@ -116,14 +120,12 @@ describe('App', () => {
     );
   });
 
-  it('should restore saved cart items from local storage', () => {
+  it('should restore saved cart items from local storage', async () => {
     window.localStorage.setItem(
       cartStorageKey,
       JSON.stringify([{ id: PRODUCTS[0].id, quantity: 2 }]),
     );
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+    const { compiled } = await renderApp();
     const pageText = compiled.textContent?.replace(/\s+/g, ' ') ?? '';
 
     expect(compiled.querySelector('.cart-pill span')?.textContent?.trim()).toBe('2');
@@ -131,10 +133,8 @@ describe('App', () => {
     expect(pageText).toContain(`Rs. ${PRODUCTS[0].price} each`);
   });
 
-  it('should clear saved cart items when the cart is cleared', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+  it('should clear saved cart items when the cart is cleared', async () => {
+    const { fixture, compiled } = await renderApp();
 
     compiled.querySelector<HTMLButtonElement>('.product-card button')?.click();
     fixture.detectChanges();
@@ -143,10 +143,8 @@ describe('App', () => {
     expect(window.localStorage.getItem(cartStorageKey)).toBeNull();
   });
 
-  it('should scroll to the cart when the cart pill is clicked', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+  it('should scroll to the cart when the cart pill is clicked', async () => {
+    const { fixture, compiled } = await renderApp();
     const scrollSpy = spyOn(HTMLElement.prototype, 'scrollIntoView');
 
     compiled.querySelector<HTMLButtonElement>('.product-card button')?.click();
@@ -160,30 +158,27 @@ describe('App', () => {
     });
   });
 
-  it('should create a WhatsApp order message from checkout details', () => {
-    const fixture = TestBed.createComponent(App);
+  it('should create a WhatsApp order message from checkout details', async () => {
+    const { fixture, compiled } = await renderApp();
     const app = fixture.componentInstance as unknown as {
-      products: Array<{ id: number; name: string; price: number }>;
       customer: { name: string; phone: string; address: string; note: string };
       addToCart(product: unknown): void;
-      placeOrderOnWhatsapp(): void;
+      placeOrderOnWhatsapp(): Promise<void>;
     };
     const openSpy = spyOn(window, 'open');
 
-    app.addToCart(app.products[0]);
+    app.addToCart(PRODUCTS[0]);
     fixture.detectChanges();
     app.customer.name = 'Anu';
     app.customer.phone = '9876543210';
     app.customer.address = 'Kochi';
     app.customer.note = '';
-    app.placeOrderOnWhatsapp();
+    await app.placeOrderOnWhatsapp();
     fixture.detectChanges();
 
     const whatsappUrl = openSpy.calls.mostRecent().args[0] as string;
     const decodedUrl = decodeURIComponent(whatsappUrl);
     const firstProduct = PRODUCTS[0];
-    const compiled = fixture.nativeElement as HTMLElement;
-
     expect(decodedUrl).toContain('https://wa.me/919961768906?text=');
     expect(decodedUrl).toContain(`${firstProduct.name} x 1: Rs. ${firstProduct.price}`);
     expect(decodedUrl).toContain('Shipping: Rs. 45');
@@ -206,24 +201,22 @@ describe('App', () => {
   });
 
   it('should close product details when browser back clears the product hash', (done) => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-
-    compiled.querySelector<HTMLElement>('.product-card')?.click();
-    fixture.detectChanges();
-
-    expect(window.location.hash).toBe(`#product-${PRODUCTS[0].id}`);
-    expect(compiled.querySelector('.product-dialog')).not.toBeNull();
-
-    window.history.back();
-
-    setTimeout(() => {
+    void renderApp().then(({ fixture, compiled }) => {
+      compiled.querySelector<HTMLElement>('.product-card')?.click();
       fixture.detectChanges();
 
-      expect(window.location.hash).toBe('');
-      expect(compiled.querySelector('.product-dialog')).toBeNull();
-      done();
-    }, 100);
+      expect(window.location.hash).toBe(`#product-${PRODUCTS[0].id}`);
+      expect(compiled.querySelector('.product-dialog')).not.toBeNull();
+
+      window.history.back();
+
+      setTimeout(() => {
+        fixture.detectChanges();
+
+        expect(window.location.hash).toBe('');
+        expect(compiled.querySelector('.product-dialog')).toBeNull();
+        done();
+      }, 100);
+    });
   });
 });

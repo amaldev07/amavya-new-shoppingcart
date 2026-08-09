@@ -93,6 +93,18 @@
                 (ngModelChange)="updateDraft({ price: $event })"
               />
             </label>
+
+            <label>
+              <span>Quantity</span>
+              <input
+                type="number"
+                name="quantity"
+                min="0"
+                required
+                [ngModel]="draft().quantity"
+                (ngModelChange)="updateDraft({ quantity: $event })"
+              />
+            </label>
           </div>
 
           <label>
@@ -166,7 +178,7 @@
               <div>
                 <strong>{{ product.name }}</strong>
                 <span>{{ product.category }} / Rs. {{ product.price }}</span>
-                <small>{{ product.active ? 'Visible' : 'Hidden' }}</small>
+                <small>{{ product.active ? 'Visible' : 'Hidden' }} / Qty {{ product.stockQuantity }}</small>
               </div>
               <div class="product-actions">
                 <button type="button" class="secondary-button" (click)="editProduct(product)">
