@@ -10,9 +10,8 @@ import java.util.Arrays;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableConfigurationProperties({
@@ -44,21 +43,24 @@ public class ApplicationConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource(AppProperties properties) {
+    WebMvcConfigurer corsConfigurer(AppProperties properties) {
         String allowedOrigins = properties.corsAllowedOrigins() == null || properties.corsAllowedOrigins().isBlank()
                 ? "http://localhost:4200"
                 : properties.corsAllowedOrigins();
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+        String[] origins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isEmpty())
-                .toList());
-        configuration.setAllowedMethods(Arrays.asList("POST", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        configuration.setMaxAge(3600L);
+                .toArray(String[]::new);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
-        return source;
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/api/**")
+                        .allowedOrigins(origins)
+                        .allowedMethods("POST", "OPTIONS")
+                        .allowedHeaders("Authorization", "Content-Type")
+                        .maxAge(3600);
+            }
+        };
     }
 }
