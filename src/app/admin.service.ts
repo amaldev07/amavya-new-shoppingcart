@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { User } from 'firebase/auth';
-import { cloudinaryConfig, hasCloudinaryConfig } from '../environments/cloudinary.config';
+import { backendConfig } from '../environments/backend.config';
+import { hasCloudinaryConfig } from '../environments/cloudinary.config';
 import { STORE_ID, firebaseConfig, hasFirebaseConfig } from '../environments/firebase.config';
 import { Category, Product } from './products';
 
@@ -28,6 +29,14 @@ export interface ProductDraft {
 interface CloudinaryUploadResult {
   publicId: string;
   secureUrl: string;
+}
+
+interface CloudinarySignature {
+  apiKey: string;
+  cloudName: string;
+  folder: string;
+  signature: string;
+  timestamp: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -135,10 +144,9 @@ export class AdminService {
     const db = getFirestore(app);
 
     if (product.cloudinaryPublicIds.length) {
-      const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const functions = getFunctions(app, 'us-central1');
-      const deleteCloudinaryImages = httpsCallable(functions, 'deleteCloudinaryImages');
-      await deleteCloudinaryImages({ publicIds: product.cloudinaryPublicIds });
+      await this.callBackend('/api/cloudinary/delete-images', {
+        publicIds: product.cloudinaryPublicIds,
+      });
     }
 
     await deleteDoc(doc(db, 'products', String(product.id)));
@@ -155,13 +163,16 @@ export class AdminService {
   }
 
   private async uploadToCloudinary(file: File, productId: number): Promise<CloudinaryUploadResult> {
+    const signature = await this.createCloudinaryUploadSignature(productId);
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', cloudinaryConfig.uploadPreset);
-    formData.append('folder', `${cloudinaryConfig.folder}/${productId}`);
+    formData.append('api_key', signature.apiKey);
+    formData.append('folder', signature.folder);
+    formData.append('signature', signature.signature);
+    formData.append('timestamp', String(signature.timestamp));
 
     const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
+      `https://api.cloudinary.com/v1_1/${signature.cloudName}/image/upload`,
       {
         method: 'POST',
         body: formData,
@@ -183,6 +194,39 @@ export class AdminService {
       publicId: result.public_id,
       secureUrl: result.secure_url,
     };
+  }
+
+  private async createCloudinaryUploadSignature(productId: number): Promise<CloudinarySignature> {
+    return this.callBackend('/api/cloudinary/sign-upload', { productId });
+  }
+
+  private async callBackend<TResponse>(
+    path: string,
+    body: Record<string, unknown>,
+  ): Promise<TResponse> {
+    const { getAuth } = await import('firebase/auth');
+    const user = getAuth(await this.getApp()).currentUser;
+
+    if (!user) {
+      throw new Error('Sign in before managing product images.');
+    }
+
+    const idToken = await user.getIdToken();
+    const response = await fetch(`${backendConfig.apiBaseUrl}${path}`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${idToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Backend request failed: ${errorBody || response.statusText}`);
+    }
+
+    return (await response.json()) as TResponse;
   }
 
   private toAdminProduct(data: Record<string, unknown>, documentId: string): AdminProduct | null {
