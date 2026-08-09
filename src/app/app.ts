@@ -11,7 +11,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { AdminComponent } from './admin.component';
 import { ProductService } from './product.service';
-import { Category, Product, PRODUCTS } from './products';
+import { Category, Product } from './products';
 
 interface CartItem extends Product {
   quantity: number;
@@ -53,8 +53,7 @@ export class App implements OnInit, OnDestroy {
     'Bracelets',
     'Bangles',
   ];
-  protected readonly products = signal<Product[]>(PRODUCTS);
-  protected readonly productsLoadFailed = signal(false);
+  protected readonly products = signal<Product[]>([]);
   protected readonly isAdminRoute = signal(false);
   protected readonly selectedCategory = signal<Category | 'All'>('All');
   protected readonly selectedProduct = signal<Product | null>(null);
@@ -112,16 +111,11 @@ export class App implements OnInit, OnDestroy {
     try {
       const products = await this.productService.getActiveProducts();
 
-      if (!products.length) {
-        return;
-      }
-
       this.products.set(products);
       this.loadCart();
       this.syncProductFromUrl();
     } catch (error) {
-      console.error('Unable to load Firebase products. Using local fallback products.', error);
-      this.productsLoadFailed.set(true);
+      console.error('Unable to load Firebase products.', error);
     }
   }
 

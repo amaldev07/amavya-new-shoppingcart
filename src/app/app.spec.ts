@@ -1,9 +1,23 @@
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
-import { PRODUCTS } from './products';
+import { ProductService } from './product.service';
+import { Product } from './products';
 
 describe('App', () => {
   const cartStorageKey = 'amavya-cart';
+  const PRODUCTS: Product[] = [
+    {
+      id: 1,
+      name: 'Test Necklace',
+      category: 'Necklaces',
+      price: 249,
+      image: 'https://res.cloudinary.com/akw21id4/image/upload/test-necklace.jpg',
+      gallery: [
+        'https://res.cloudinary.com/akw21id4/image/upload/test-necklace.jpg',
+        'https://res.cloudinary.com/akw21id4/image/upload/test-necklace-2.jpg',
+      ],
+    },
+  ];
 
   beforeEach(async () => {
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
@@ -11,6 +25,14 @@ describe('App', () => {
 
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [
+        {
+          provide: ProductService,
+          useValue: {
+            getActiveProducts: () => Promise.resolve(PRODUCTS),
+          },
+        },
+      ],
     }).compileComponents();
   });
 
