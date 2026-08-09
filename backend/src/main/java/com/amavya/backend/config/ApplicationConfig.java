@@ -45,8 +45,11 @@ public class ApplicationConfig {
 
     @Bean
     CorsConfigurationSource corsConfigurationSource(AppProperties properties) {
+        String allowedOrigins = properties.corsAllowedOrigins() == null || properties.corsAllowedOrigins().isBlank()
+                ? "http://localhost:4200"
+                : properties.corsAllowedOrigins();
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.stream(properties.corsAllowedOrigins().split(","))
+        configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isEmpty())
                 .toList());
