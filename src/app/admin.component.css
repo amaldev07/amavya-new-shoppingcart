@@ -153,7 +153,8 @@ textarea:focus {
 }
 
 .primary-button,
-.secondary-button {
+.secondary-button,
+.danger-button {
   min-height: 42px;
   border: 0;
   border-radius: 6px;
@@ -175,6 +176,13 @@ textarea:focus {
   border: 1px solid rgba(62, 24, 49, 0.16);
   background: #fff;
   color: #3b182f;
+  padding: 0 14px;
+}
+
+.danger-button {
+  border: 1px solid rgba(140, 38, 34, 0.18);
+  background: #fdeeed;
+  color: #8c2622;
   padding: 0 14px;
 }
 

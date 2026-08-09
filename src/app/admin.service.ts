@@ -6,6 +6,7 @@ import { Category, Product } from './products';
 
 export interface AdminProduct extends Product {
   active: boolean;
+  cloudinaryPublicIds: string[];
   description: string;
   sortOrder: number;
   storeId: string;
@@ -21,6 +22,12 @@ export interface ProductDraft {
   image: string;
   gallery: string[];
   sortOrder: number | null;
+  cloudinaryPublicIds?: string[];
+}
+
+interface CloudinaryUploadResult {
+  publicId: string;
+  secureUrl: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -71,17 +78,21 @@ export class AdminService {
     const db = getFirestore(app);
     const id = draft.id ?? Date.now();
     const uploadedImages: string[] = [];
+    const uploadedPublicIds: string[] = [];
 
     if (files.length && !hasCloudinaryConfig) {
       throw new Error('Cloudinary config is missing.');
     }
 
     for (const file of files) {
-      uploadedImages.push(await this.uploadToCloudinary(file, id));
+      const uploadedImage = await this.uploadToCloudinary(file, id);
+      uploadedImages.push(uploadedImage.secureUrl);
+      uploadedPublicIds.push(uploadedImage.publicId);
     }
 
     const gallery = [...draft.gallery, ...uploadedImages].filter(Boolean);
     const image = uploadedImages[0] ?? draft.image ?? gallery[0];
+    const cloudinaryPublicIds = [...(draft.cloudinaryPublicIds ?? []), ...uploadedPublicIds];
 
     if (!image) {
       throw new Error('Product needs at least one image.');
@@ -98,6 +109,7 @@ export class AdminService {
         description: draft.description.trim(),
         image,
         gallery: gallery.length ? gallery : [image],
+        cloudinaryPublicIds,
         active: draft.active,
         sortOrder: draft.sortOrder ?? id,
         updatedAt: serverTimestamp(),
@@ -117,6 +129,21 @@ export class AdminService {
     });
   }
 
+  async deleteProduct(product: AdminProduct): Promise<void> {
+    const { deleteDoc, doc, getFirestore } = await import('firebase/firestore');
+    const app = await this.getApp();
+    const db = getFirestore(app);
+
+    if (product.cloudinaryPublicIds.length) {
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const functions = getFunctions(app, 'us-central1');
+      const deleteCloudinaryImages = httpsCallable(functions, 'deleteCloudinaryImages');
+      await deleteCloudinaryImages({ publicIds: product.cloudinaryPublicIds });
+    }
+
+    await deleteDoc(doc(db, 'products', String(product.id)));
+  }
+
   private async getApp() {
     if (!hasFirebaseConfig) {
       throw new Error('Firebase config is missing.');
@@ -127,7 +154,7 @@ export class AdminService {
     return getApps()[0] ?? initializeApp(firebaseConfig);
   }
 
-  private async uploadToCloudinary(file: File, productId: number): Promise<string> {
+  private async uploadToCloudinary(file: File, productId: number): Promise<CloudinaryUploadResult> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', cloudinaryConfig.uploadPreset);
@@ -146,13 +173,16 @@ export class AdminService {
       throw new Error(`Cloudinary upload failed: ${errorBody}`);
     }
 
-    const result = (await response.json()) as { secure_url?: string };
+    const result = (await response.json()) as { public_id?: string; secure_url?: string };
 
-    if (!result.secure_url) {
+    if (!result.public_id || !result.secure_url) {
       throw new Error('Cloudinary upload did not return an image URL.');
     }
 
-    return result.secure_url;
+    return {
+      publicId: result.public_id,
+      secureUrl: result.secure_url,
+    };
   }
 
   private toAdminProduct(data: Record<string, unknown>, documentId: string): AdminProduct | null {
@@ -163,6 +193,9 @@ export class AdminService {
     const image = String(data['image'] ?? '').trim();
     const gallery = Array.isArray(data['gallery'])
       ? data['gallery'].map((item) => String(item)).filter(Boolean)
+      : [];
+    const cloudinaryPublicIds = Array.isArray(data['cloudinaryPublicIds'])
+      ? data['cloudinaryPublicIds'].map((item) => String(item)).filter(Boolean)
       : [];
 
     if (!Number.isInteger(id) || !name || !Number.isFinite(price) || !image) {
@@ -177,6 +210,7 @@ export class AdminService {
       image,
       gallery: gallery.length ? gallery : [image],
       active: data['active'] !== false,
+      cloudinaryPublicIds,
       description: String(data['description'] ?? ''),
       sortOrder: Number(data['sortOrder'] ?? id),
       storeId: String(data['storeId'] ?? STORE_ID),

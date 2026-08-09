@@ -84,6 +84,7 @@ export class AdminComponent implements OnInit {
       image: product.image,
       gallery: product.gallery,
       sortOrder: product.sortOrder,
+      cloudinaryPublicIds: product.cloudinaryPublicIds,
     });
     this.selectedFiles.set([]);
   }
@@ -122,6 +123,30 @@ export class AdminComponent implements OnInit {
   protected async setActive(product: AdminProduct, active: boolean): Promise<void> {
     try {
       await this.adminService.setProductActive(product, active);
+      await this.loadProducts();
+    } catch (error) {
+      this.setError(error);
+    }
+  }
+
+  protected async deleteProduct(product: AdminProduct): Promise<void> {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    const confirmed = window.confirm(`Delete "${product.name}" from the catalog?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await this.adminService.deleteProduct(product);
+      this.successMessage.set('Product deleted.');
+
+      if (this.draft().id === product.id) {
+        this.resetDraft();
+      }
+
       await this.loadProducts();
     } catch (error) {
       this.setError(error);
