@@ -58,7 +58,7 @@ public class OrderService {
             orderRequest.put("notes", createRazorpayNotes(cart, request.customer()));
 
             Order order = razorpay.orders.create(orderRequest);
-            String orderId = String.valueOf(order.get("id"));
+            String orderId = readRazorpayOrderId(order);
 
             db.collection(PAYMENT_ORDERS_COLLECTION)
                     .document(orderId)
@@ -353,6 +353,16 @@ public class OrderService {
 
     private String truncate(String value, int maxLength) {
         return value.length() <= maxLength ? value : value.substring(0, maxLength);
+    }
+
+    static String readRazorpayOrderId(Order order) {
+        Object orderIdValue = order.get("id");
+
+        if (!(orderIdValue instanceof String orderId) || orderId.isBlank()) {
+            throw new IllegalStateException("Razorpay returned an invalid order id.");
+        }
+
+        return orderId;
     }
 
     private String bytesToHex(byte[] bytes) {
