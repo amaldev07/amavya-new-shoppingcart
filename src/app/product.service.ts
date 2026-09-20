@@ -5,6 +5,30 @@ import { Category, Product } from './products';
 
 const CATEGORIES = new Set<Category>(['Necklaces', 'Earrings', 'Bracelets', 'Bangles']);
 
+export interface CheckoutCustomer {
+  name: string;
+  phone: string;
+  address: string;
+  note: string;
+}
+
+export interface PaymentOrder {
+  keyId: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  prefillName: string;
+  prefillContact: string;
+}
+
+export interface RazorpayPaymentResult {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   async getActiveProducts(): Promise<Product[]> {
@@ -29,8 +53,11 @@ export class ProductService {
       .sort((first, second) => first.id - second.id);
   }
 
-  async completeCheckout(items: Array<{ id: number; quantity: number }>): Promise<void> {
-    const response = await fetch(`${backendConfig.apiBaseUrl}/api/orders/checkout`, {
+  async createPaymentOrder(
+    items: Array<{ id: number; quantity: number }>,
+    customer: CheckoutCustomer,
+  ): Promise<PaymentOrder> {
+    const response = await fetch(`${backendConfig.apiBaseUrl}/api/orders/payment-order`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -40,12 +67,34 @@ export class ProductService {
           productId: item.id,
           quantity: item.quantity,
         })),
+        customer,
       }),
     });
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(errorBody || 'Checkout failed.');
+      throw new Error(errorBody || 'Unable to start payment.');
+    }
+
+    return (await response.json()) as PaymentOrder;
+  }
+
+  async verifyPayment(payment: RazorpayPaymentResult): Promise<void> {
+    const response = await fetch(`${backendConfig.apiBaseUrl}/api/orders/verify-payment`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        razorpayOrderId: payment.razorpay_order_id,
+        razorpayPaymentId: payment.razorpay_payment_id,
+        razorpaySignature: payment.razorpay_signature,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(errorBody || 'Payment verification failed.');
     }
   }
 

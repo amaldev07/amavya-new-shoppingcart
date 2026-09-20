@@ -1,0 +1,44 @@
+
+> shopping-kart@0.0.0 start
+> ng serve --host 127.0.0.1 --port 4200
+
+> Building...
+√ Building...
+Initial chunk files | Names         |  Raw size
+main.js             | main          | 135.94 kB | 
+styles.css          | styles        | 618 bytes | 
+polyfills.js        | polyfills     |  95 bytes | 
+
+                    | Initial total | 136.66 kB
+
+Application bundle generation complete. [8.407 seconds] - 2026-09-05T13:14:20.982Z
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+6:44:21 pm [vite] (client) Re-optimizing dependencies because vite config has changed
+  ➜  Local:   http://127.0.0.1:4200/
+  ➜  press h + enter to show help
+> Changes detected. Rebuilding...
+√ Changes detected. Rebuilding...
+Application bundle generation failed. [1.121 seconds] - 2026-09-05T13:53:15.957Z
+
+> Changes detected. Rebuilding...
+√ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          | 134.31 kB | 
+styles.css          | styles        | 618 bytes | 
+polyfills.js        | polyfills     |  95 bytes | 
+
+                    | Initial total | 135.02 kB
+
+Application bundle generation complete. [0.489 seconds] - 2026-09-05T13:53:27.492Z
+
+Page reload sent to client(s).
+> Changes detected. Rebuilding...
+√ Changes detected. Rebuilding...
+Initial chunk files | Names |  Raw size
+main.js             | main  | 134.31 kB | 
+
+Application bundle generation complete. [0.431 seconds] - 2026-09-05T13:53:34.066Z
+
+Component update sent to client(s).

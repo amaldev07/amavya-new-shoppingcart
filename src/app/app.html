@@ -86,7 +86,15 @@
         }
       </div>
 
-      @if (cart().length) {
+      @if (paymentCompleted()) {
+        <div class="order-success" role="status">
+          <strong>Payment completed</strong>
+          <p>Your order is confirmed. We will contact you if anything else is needed.</p>
+          <button type="button" class="success-action-button" (click)="dismissPaymentSuccess()">
+            Continue shopping
+          </button>
+        </div>
+      } @else if (cart().length) {
         <div class="cart-items">
           @for (item of cart(); track item.id) {
             <div class="cart-item">
@@ -133,7 +141,7 @@
         </dl>
 
         @if (checkoutOpen()) {
-          <form class="checkout-form" #checkoutForm="ngForm" (ngSubmit)="placeOrderOnWhatsapp()">
+          <form class="checkout-form" #checkoutForm="ngForm" (ngSubmit)="payOnlineAndPlaceOrder()">
             <label>
               <span>Name</span>
               <input
@@ -177,7 +185,7 @@
               class="checkout-button"
               [disabled]="checkoutForm.invalid || checkoutProcessing()"
             >
-              {{ checkoutProcessing() ? 'Placing order...' : 'Place order on WhatsApp' }}
+              {{ checkoutProcessing() ? 'Opening payment...' : 'Pay online' }}
             </button>
           </form>
         } @else {
@@ -186,20 +194,6 @@
 
         @if (checkoutError()) {
           <p class="form-message error">{{ checkoutError() }}</p>
-        }
-
-        @if (orderMessageOpened()) {
-          <div class="order-success" role="status">
-            <strong>Order message opened in WhatsApp</strong>
-            <p>After sending it there, tap below to clear this cart.</p>
-            <button
-              type="button"
-              class="sent-message-button"
-              (click)="confirmWhatsappMessageSent()"
-            >
-              I sent the message
-            </button>
-          </div>
         }
       } @else {
         <div class="empty-cart">

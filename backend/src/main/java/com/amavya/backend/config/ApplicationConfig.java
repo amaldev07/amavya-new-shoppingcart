@@ -17,7 +17,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableConfigurationProperties({
     AppProperties.class,
     CloudinaryProperties.class,
-    FirebaseProperties.class
+    FirebaseProperties.class,
+    RazorpayProperties.class
 })
 public class ApplicationConfig {
     @Bean

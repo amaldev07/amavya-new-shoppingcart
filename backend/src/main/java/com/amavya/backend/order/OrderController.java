@@ -15,9 +15,14 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    @PostMapping("/checkout")
-    public CheckoutResponse checkout(@Valid @RequestBody CheckoutRequest request) {
-        orderService.completeCheckout(request);
-        return new CheckoutResponse(true);
+    @PostMapping("/payment-order")
+    public PaymentOrderResponse createPaymentOrder(@Valid @RequestBody CreatePaymentOrderRequest request) {
+        return orderService.createPaymentOrder(request);
+    }
+
+    @PostMapping("/verify-payment")
+    public VerifyPaymentResponse verifyPayment(@Valid @RequestBody VerifyPaymentRequest request) {
+        orderService.verifyPayment(request);
+        return new VerifyPaymentResponse(true);
     }
 }

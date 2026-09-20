@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminComponent } from './admin.component';
-import { ProductService } from './product.service';
+import { PaymentOrder, ProductService, RazorpayPaymentResult } from './product.service';
 import { Category, Product } from './products';
 
 interface CartItem extends Product {
@@ -29,12 +29,43 @@ interface StoredCartItem {
   quantity: number;
 }
 
+interface RazorpayCheckoutOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  prefill: {
+    name: string;
+    contact: string;
+  };
+  theme: {
+    color: string;
+  };
+  handler: (response: RazorpayPaymentResult) => void;
+  modal: {
+    ondismiss: () => void;
+  };
+}
+
+interface RazorpayCheckout {
+  open(): void;
+}
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayCheckoutOptions) => RazorpayCheckout;
+  }
+}
+
 const CART_STORAGE_KEY = 'amavya-cart';
 const SHIPPING_CHARGE = 45;
 const WHATSAPP_NUMBER = '919961768906';
 const CONTACT_PHONE = '+91 99617 68906';
 const CONTACT_EMAIL = 'support.amavya@gmail.com';
 const INSTAGRAM_URL = 'https://www.instagram.com/_amavya_/';
+const RAZORPAY_CHECKOUT_SCRIPT_URL = 'https://checkout.razorpay.com/v1/checkout.js';
 
 @Component({
   selector: 'app-root',
@@ -59,7 +90,7 @@ export class App implements OnInit, OnDestroy {
   protected readonly selectedProduct = signal<Product | null>(null);
   protected readonly cart = signal<CartItem[]>([]);
   protected readonly checkoutOpen = signal(false);
-  protected readonly orderMessageOpened = signal(false);
+  protected readonly paymentCompleted = signal(false);
   protected readonly checkoutProcessing = signal(false);
   protected readonly checkoutError = signal('');
   protected readonly shippingCharge = SHIPPING_CHARGE;
@@ -135,7 +166,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   protected addToCart(product: Product): void {
-    this.orderMessageOpened.set(false);
+    this.paymentCompleted.set(false);
     this.checkoutError.set('');
 
     if (!this.canAddToCart(product)) {
@@ -209,21 +240,13 @@ export class App implements OnInit, OnDestroy {
   protected clearCart(): void {
     this.cart.set([]);
     this.checkoutOpen.set(false);
-    this.orderMessageOpened.set(false);
+    this.paymentCompleted.set(false);
     this.checkoutError.set('');
     this.clearStoredCart();
   }
 
-  protected confirmWhatsappMessageSent(): void {
-    this.cart.set([]);
-    this.checkoutOpen.set(false);
-    this.orderMessageOpened.set(false);
-    this.customer.name = '';
-    this.customer.phone = '';
-    this.customer.address = '';
-    this.customer.note = '';
-    void this.loadProducts();
-    this.clearStoredCart();
+  protected dismissPaymentSuccess(): void {
+    this.paymentCompleted.set(false);
   }
 
   protected openCheckout(): void {
@@ -329,53 +352,114 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  protected async placeOrderOnWhatsapp(): Promise<void> {
+  protected async payOnlineAndPlaceOrder(): Promise<void> {
     this.checkoutError.set('');
     this.checkoutProcessing.set(true);
 
     try {
-      await this.productService.completeCheckout(
+      const paymentOrder = await this.productService.createPaymentOrder(
         this.cart().map((item) => ({
           id: item.id,
           quantity: item.quantity,
         })),
+        {
+          name: this.customer.name.trim(),
+          phone: this.customer.phone.trim(),
+          address: this.customer.address.trim(),
+          note: this.customer.note.trim(),
+        },
       );
+
+      await this.openRazorpayCheckout(paymentOrder);
     } catch (error) {
       this.checkoutError.set(
-        error instanceof Error
-          ? error.message
-          : 'Unable to update product quantity. Please try again.',
+        error instanceof Error ? error.message : 'Unable to complete payment. Please try again.',
       );
       this.checkoutProcessing.set(false);
       return;
     }
 
-    const message = [
-      'Hi Amavya, I would like to place an order.',
-      '',
-      'Order details:',
-      ...this.cart().map(
-        (item) => `- ${item.name} x ${item.quantity}: Rs. ${item.price * item.quantity}`,
-      ),
-      '',
-      `Subtotal: Rs. ${this.subtotal()}`,
-      `Shipping: Rs. ${this.shippingTotal()}`,
-      `Total: Rs. ${this.grandTotal()}`,
-      '',
-      'Customer details:',
-      `Name: ${this.customer.name.trim()}`,
-      `Phone: ${this.customer.phone.trim()}`,
-      `Address: ${this.customer.address.trim()}`,
-      this.customer.note.trim() ? `Note: ${this.customer.note.trim()}` : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
+    this.completePaidOrder();
+  }
 
-    const phonePath = WHATSAPP_NUMBER ? `/${WHATSAPP_NUMBER}` : '';
-    const url = `https://wa.me${phonePath}?text=${encodeURIComponent(message)}`;
+  private async openRazorpayCheckout(paymentOrder: PaymentOrder): Promise<void> {
+    await this.loadRazorpayCheckout();
 
-    window.open(url, '_blank', 'noopener');
-    this.orderMessageOpened.set(true);
+    if (!window.Razorpay) {
+      throw new Error('Razorpay checkout could not be loaded.');
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      let paymentHandled = false;
+      const checkout = new window.Razorpay!({
+        key: paymentOrder.keyId,
+        amount: paymentOrder.amount,
+        currency: paymentOrder.currency,
+        name: paymentOrder.name,
+        description: paymentOrder.description,
+        order_id: paymentOrder.orderId,
+        prefill: {
+          name: paymentOrder.prefillName,
+          contact: paymentOrder.prefillContact,
+        },
+        theme: {
+          color: '#b99358',
+        },
+        handler: (response) => {
+          paymentHandled = true;
+          void this.productService.verifyPayment(response).then(resolve).catch(reject);
+        },
+        modal: {
+          ondismiss: () => {
+            if (!paymentHandled) {
+              reject(new Error('Payment was cancelled.'));
+            }
+          },
+        },
+      });
+
+      checkout.open();
+    });
+  }
+
+  private loadRazorpayCheckout(): Promise<void> {
+    if (window.Razorpay) {
+      return Promise.resolve();
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      `script[src="${RAZORPAY_CHECKOUT_SCRIPT_URL}"]`,
+    );
+
+    if (existingScript) {
+      return new Promise((resolve, reject) => {
+        existingScript.addEventListener('load', () => resolve(), { once: true });
+        existingScript.addEventListener('error', () => reject(new Error('Unable to load Razorpay.')), {
+          once: true,
+        });
+      });
+    }
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = RAZORPAY_CHECKOUT_SCRIPT_URL;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Unable to load Razorpay.'));
+      document.body.appendChild(script);
+    });
+  }
+
+  private completePaidOrder(): void {
+    this.cart.set([]);
+    this.checkoutOpen.set(false);
+    this.paymentCompleted.set(true);
     this.checkoutProcessing.set(false);
+    this.customer.name = '';
+    this.customer.phone = '';
+    this.customer.address = '';
+    this.customer.note = '';
+    this.clearStoredCart();
+    void this.loadProducts();
   }
 }

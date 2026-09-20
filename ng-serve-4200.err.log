@@ -1,0 +1,52 @@
+X [ERROR] TS2339: Property 'orderMessageOpened' does not exist on type 'App'. [plugin angular-compiler]
+
+    src/app/app.html:135:32:
+      135 │         @if (checkoutOpen() && !orderMessageOpened()) {
+          ╵                                 ~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component App.
+
+    src/app/app.ts:73:15:
+      73 │   templateUrl: './app.html',
+         ╵                ~~~~~~~~~~~~
+
+
+X [ERROR] TS2339: Property 'orderMessageOpened' does not exist on type 'App'. [plugin angular-compiler]
+
+    src/app/app.html:184:16:
+      184 │           @if (!orderMessageOpened()) {
+          ╵                 ~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component App.
+
+    src/app/app.ts:73:15:
+      73 │   templateUrl: './app.html',
+         ╵                ~~~~~~~~~~~~
+
+
+X [ERROR] TS2339: Property 'orderMessageOpened' does not exist on type 'App'. [plugin angular-compiler]
+
+    src/app/app.html:193:13:
+      193 │         @if (orderMessageOpened()) {
+          ╵              ~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component App.
+
+    src/app/app.ts:73:15:
+      73 │   templateUrl: './app.html',
+         ╵                ~~~~~~~~~~~~
+
+
+X [ERROR] TS2339: Property 'confirmWhatsappMessageSent' does not exist on type 'App'. [plugin angular-compiler]
+
+    src/app/app.html:200:23:
+      200 │               (click)="confirmWhatsappMessageSent()"
+          ╵                        ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component App.
+
+    src/app/app.ts:73:15:
+      73 │   templateUrl: './app.html',
+         ╵                ~~~~~~~~~~~~
+
+

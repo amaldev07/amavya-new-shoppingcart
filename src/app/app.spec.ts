@@ -23,6 +23,7 @@ describe('App', () => {
   beforeEach(async () => {
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
     window.localStorage.removeItem(cartStorageKey);
+    delete (window as Window & { Razorpay?: unknown }).Razorpay;
 
     await TestBed.configureTestingModule({
       imports: [App],
@@ -31,7 +32,18 @@ describe('App', () => {
           provide: ProductService,
           useValue: {
             getActiveProducts: () => Promise.resolve(PRODUCTS),
-            completeCheckout: () => Promise.resolve(),
+            createPaymentOrder: () =>
+              Promise.resolve({
+                keyId: 'rzp_test_key',
+                orderId: 'order_test',
+                amount: (PRODUCTS[0].price + 45) * 100,
+                currency: 'INR',
+                name: 'Amavya',
+                description: 'Amavya jewellery order',
+                prefillName: 'Anu',
+                prefillContact: '9876543210',
+              }),
+            verifyPayment: () => Promise.resolve(),
           },
         },
       ],
@@ -158,14 +170,42 @@ describe('App', () => {
     });
   });
 
-  it('should create a WhatsApp order message from checkout details', async () => {
+  it('should confirm the paid order without opening WhatsApp', async () => {
     const { fixture, compiled } = await renderApp();
+    const razorpayWindow = window as Window & {
+      Razorpay?: new (options: {
+        handler: (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => void;
+      }) => { open(): void };
+    };
     const app = fixture.componentInstance as unknown as {
       customer: { name: string; phone: string; address: string; note: string };
       addToCart(product: unknown): void;
-      placeOrderOnWhatsapp(): Promise<void>;
+      payOnlineAndPlaceOrder(): Promise<void>;
     };
     const openSpy = spyOn(window, 'open');
+    razorpayWindow.Razorpay = class {
+      constructor(
+        private readonly options: {
+          handler: (response: {
+            razorpay_order_id: string;
+            razorpay_payment_id: string;
+            razorpay_signature: string;
+          }) => void;
+        },
+      ) {}
+
+      open(): void {
+        this.options.handler({
+          razorpay_order_id: 'order_test',
+          razorpay_payment_id: 'pay_test',
+          razorpay_signature: 'signature_test',
+        });
+      }
+    };
 
     app.addToCart(PRODUCTS[0]);
     fixture.detectChanges();
@@ -173,31 +213,23 @@ describe('App', () => {
     app.customer.phone = '9876543210';
     app.customer.address = 'Kochi';
     app.customer.note = '';
-    await app.placeOrderOnWhatsapp();
+    await app.payOnlineAndPlaceOrder();
     fixture.detectChanges();
 
-    const whatsappUrl = openSpy.calls.mostRecent().args[0] as string;
-    const decodedUrl = decodeURIComponent(whatsappUrl);
-    const firstProduct = PRODUCTS[0];
-    expect(decodedUrl).toContain('https://wa.me/919961768906?text=');
-    expect(decodedUrl).toContain(`${firstProduct.name} x 1: Rs. ${firstProduct.price}`);
-    expect(decodedUrl).toContain('Shipping: Rs. 45');
-    expect(decodedUrl).toContain(`Total: Rs. ${firstProduct.price + 45}`);
-    expect(decodedUrl).toContain('Name: Anu');
-    expect(decodedUrl).toContain('Phone: 9876543210');
-    expect(decodedUrl).toContain('Address: Kochi');
-    expect(compiled.querySelector('.cart-pill span')?.textContent?.trim()).toBe('1');
-    expect(compiled.textContent).toContain('Order message opened in WhatsApp');
-    expect(window.localStorage.getItem(cartStorageKey)).toBe(
-      JSON.stringify([{ id: firstProduct.id, quantity: 1 }]),
-    );
+    expect(openSpy).not.toHaveBeenCalled();
+    expect(compiled.querySelector('.cart-pill span')?.textContent?.trim()).toBe('0');
+    expect(compiled.textContent).toContain('Payment completed');
+    expect(compiled.textContent).toContain('Your order is confirmed');
+    expect(window.localStorage.getItem(cartStorageKey)).toBeNull();
 
-    compiled.querySelector<HTMLButtonElement>('.sent-message-button')?.click();
+    compiled.querySelector<HTMLButtonElement>('.success-action-button')?.click();
     fixture.detectChanges();
 
     expect(compiled.querySelector('.cart-pill span')?.textContent?.trim()).toBe('0');
-    expect(compiled.textContent).not.toContain('Order message opened in WhatsApp');
+    expect(compiled.textContent).not.toContain('Payment completed');
     expect(window.localStorage.getItem(cartStorageKey)).toBeNull();
+
+    delete razorpayWindow.Razorpay;
   });
 
   it('should close product details when browser back clears the product hash', (done) => {
