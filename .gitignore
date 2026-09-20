@@ -37,6 +37,7 @@ yarn-error.log
 /coverage
 /backend/.gradle
 /backend/build
+/backend/bin
 /libpeerconnection.log
 testem.log
 /typings

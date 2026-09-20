@@ -5,9 +5,11 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.SetOptions;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.cloud.FirestoreClient;
 import com.razorpay.Order;
+import com.razorpay.Payment;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import java.nio.charset.StandardCharsets;
@@ -88,12 +90,40 @@ public class OrderService {
     public void verifyPayment(VerifyPaymentRequest request) {
         verifyRazorpaySignature(request);
 
+        CapturedPayment payment = fetchCapturedPayment(request.razorpayPaymentId());
+        validatePaymentIdentity(payment, request.razorpayOrderId(), request.razorpayPaymentId());
+        fulfillCapturedPayment(payment, "browser");
+    }
+
+    public void handleRazorpayWebhook(String payload, String signature) {
+        verifyWebhookSignature(payload, signature);
+
+        JSONObject event = new JSONObject(payload);
+        String eventType = event.optString("event");
+
+        switch (eventType) {
+            case "payment.captured", "order.paid" -> {
+                CapturedPayment payment = readPaymentEntity(event);
+                fulfillCapturedPayment(payment, "webhook:" + eventType);
+            }
+            case "payment.failed" -> recordFailedPayment(readPaymentEntityJson(event));
+            default -> {
+                // Acknowledge unneeded events so Razorpay does not retry them.
+            }
+        }
+    }
+
+    private void fulfillCapturedPayment(CapturedPayment payment, String confirmationSource) {
+        if (!"captured".equals(payment.status())) {
+            throw new PaymentVerificationException("Payment has not been captured.");
+        }
+
         Firestore db = FirestoreClient.getFirestore(firebaseApp);
 
         try {
             db.runTransaction(transaction -> {
                 DocumentReference orderRef = db.collection(PAYMENT_ORDERS_COLLECTION)
-                        .document(request.razorpayOrderId());
+                        .document(payment.orderId());
                 DocumentSnapshot orderSnapshot = transaction.get(orderRef).get();
 
                 if (!orderSnapshot.exists()) {
@@ -105,12 +135,15 @@ public class OrderService {
                 }
 
                 DocumentReference paymentRef = db.collection(PAYMENTS_COLLECTION)
-                        .document(request.razorpayPaymentId());
+                        .document(payment.paymentId());
                 DocumentSnapshot paymentSnapshot = transaction.get(paymentRef).get();
 
-                if (paymentSnapshot.exists()) {
+                if (paymentSnapshot.exists()
+                        && isCompletedPaymentStatus(paymentSnapshot.getString("status"))) {
                     return null;
                 }
+
+                validatePaymentAgainstOrder(payment, orderSnapshot);
 
                 List<CheckoutItem> orderItems = readOrderItems(orderSnapshot);
                 Map<DocumentReference, ProductStockUpdate> updates = new HashMap<>();
@@ -149,16 +182,18 @@ public class OrderService {
                 });
 
                 transaction.set(paymentRef, Map.of(
-                        "razorpayOrderId", request.razorpayOrderId(),
-                        "razorpayPaymentId", request.razorpayPaymentId(),
-                        "status", "paid",
-                        "amount", orderSnapshot.getLong("amount"),
-                        "currency", orderSnapshot.getString("currency"),
+                        "razorpayOrderId", payment.orderId(),
+                        "razorpayPaymentId", payment.paymentId(),
+                        "status", "captured",
+                        "amount", payment.amount(),
+                        "currency", payment.currency(),
+                        "confirmationSource", confirmationSource,
                         "createdAt", Timestamp.now()
                 ));
                 transaction.update(orderRef, Map.of(
                         "status", "paid",
-                        "razorpayPaymentId", request.razorpayPaymentId(),
+                        "razorpayPaymentId", payment.paymentId(),
+                        "confirmationSource", confirmationSource,
                         "paidAt", Timestamp.now()
                 ));
 
@@ -175,6 +210,55 @@ public class OrderService {
             }
 
             throw new IllegalStateException("Payment verification failed.", exception);
+        }
+    }
+
+    private void recordFailedPayment(JSONObject paymentJson) {
+        String paymentId = paymentJson.optString("id");
+        String orderId = paymentJson.optString("order_id");
+
+        if (paymentId.isBlank() || orderId.isBlank()) {
+            throw new PaymentVerificationException("Failed payment details are invalid.");
+        }
+
+        Firestore db = FirestoreClient.getFirestore(firebaseApp);
+        Map<String, Object> failedPayment = new HashMap<>();
+        failedPayment.put("razorpayOrderId", orderId);
+        failedPayment.put("razorpayPaymentId", paymentId);
+        failedPayment.put("status", "failed");
+        failedPayment.put("errorCode", paymentJson.optString("error_code"));
+        failedPayment.put("errorDescription", paymentJson.optString("error_description"));
+        failedPayment.put("errorReason", paymentJson.optString("error_reason"));
+        failedPayment.put("updatedAt", Timestamp.now());
+
+        try {
+            DocumentReference paymentRef = db.collection(PAYMENTS_COLLECTION).document(paymentId);
+            DocumentReference orderRef = db.collection(PAYMENT_ORDERS_COLLECTION).document(orderId);
+            db.runTransaction(transaction -> {
+                DocumentSnapshot paymentSnapshot = transaction.get(paymentRef).get();
+                DocumentSnapshot orderSnapshot = transaction.get(orderRef).get();
+
+                if (paymentSnapshot.exists()
+                        && isCompletedPaymentStatus(paymentSnapshot.getString("status"))) {
+                    return null;
+                }
+
+                transaction.set(paymentRef, failedPayment, SetOptions.merge());
+
+                if (orderSnapshot.exists() && !"paid".equals(orderSnapshot.getString("status"))) {
+                    transaction.set(orderRef, Map.of(
+                        "lastFailedPaymentId", paymentId,
+                        "lastPaymentFailedAt", Timestamp.now()
+                    ), SetOptions.merge());
+                }
+
+                return null;
+            }).get();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Failed payment recording was interrupted.", exception);
+        } catch (ExecutionException exception) {
+            throw new IllegalStateException("Unable to record failed payment.", exception);
         }
     }
 
@@ -227,6 +311,64 @@ public class OrderService {
         }
 
         return new RazorpayClient(razorpayProperties.keyId(), razorpayProperties.keySecret());
+    }
+
+    private CapturedPayment fetchCapturedPayment(String paymentId) {
+        try {
+            RazorpayClient razorpay = createRazorpayClient();
+            Payment payment = razorpay.payments.fetch(paymentId);
+            return readCapturedPayment(payment.toJson());
+        } catch (RazorpayException exception) {
+            throw new IllegalStateException("Unable to fetch Razorpay payment.", exception);
+        }
+    }
+
+    private void validatePaymentIdentity(CapturedPayment payment, String orderId, String paymentId) {
+        if (!payment.paymentId().equals(paymentId) || !payment.orderId().equals(orderId)) {
+            throw new PaymentVerificationException("Payment details do not match the checkout response.");
+        }
+    }
+
+    private void validatePaymentAgainstOrder(CapturedPayment payment, DocumentSnapshot orderSnapshot) {
+        Long expectedAmount = orderSnapshot.getLong("amount");
+        String expectedCurrency = orderSnapshot.getString("currency");
+
+        if (expectedAmount == null || expectedAmount != payment.amount()) {
+            throw new PaymentVerificationException("Payment amount does not match the order.");
+        }
+
+        if (expectedCurrency == null || !expectedCurrency.equalsIgnoreCase(payment.currency())) {
+            throw new PaymentVerificationException("Payment currency does not match the order.");
+        }
+    }
+
+    private void verifyWebhookSignature(String payload, String signature) {
+        if (razorpayProperties.webhookSecret() == null || razorpayProperties.webhookSecret().isBlank()) {
+            throw new IllegalStateException("Razorpay webhook secret is not configured.");
+        }
+
+        verifySignature(
+                payload,
+                signature,
+                razorpayProperties.webhookSecret(),
+                "Webhook signature is invalid."
+        );
+    }
+
+    private CapturedPayment readPaymentEntity(JSONObject event) {
+        return readCapturedPayment(readPaymentEntityJson(event));
+    }
+
+    private JSONObject readPaymentEntityJson(JSONObject event) {
+        JSONObject payload = event.optJSONObject("payload");
+        JSONObject payment = payload == null ? null : payload.optJSONObject("payment");
+        JSONObject entity = payment == null ? null : payment.optJSONObject("entity");
+
+        if (entity == null) {
+            throw new PaymentVerificationException("Webhook payment details are invalid.");
+        }
+
+        return entity;
     }
 
     private JSONObject createRazorpayNotes(CartCalculation cart, CustomerDetails customer) {
@@ -297,26 +439,62 @@ public class OrderService {
     }
 
     private void verifyRazorpaySignature(VerifyPaymentRequest request) {
+        if (razorpayProperties.keySecret() == null || razorpayProperties.keySecret().isBlank()) {
+            throw new IllegalStateException("Razorpay credentials are not configured.");
+        }
+
+        String payload = request.razorpayOrderId() + "|" + request.razorpayPaymentId();
+        verifySignature(
+                payload,
+                request.razorpaySignature(),
+                razorpayProperties.keySecret(),
+                "Payment signature is invalid."
+        );
+    }
+
+    private void verifySignature(String payload, String signature, String secret, String failureMessage) {
+        if (signature == null || signature.isBlank()) {
+            throw new PaymentVerificationException(failureMessage);
+        }
+
         try {
-            String payload = request.razorpayOrderId() + "|" + request.razorpayPaymentId();
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(
-                    razorpayProperties.keySecret().getBytes(StandardCharsets.UTF_8),
+                    secret.getBytes(StandardCharsets.UTF_8),
                     "HmacSHA256"
             ));
             String expectedSignature = bytesToHex(mac.doFinal(payload.getBytes(StandardCharsets.UTF_8)));
 
             if (!MessageDigest.isEqual(
                     expectedSignature.getBytes(StandardCharsets.UTF_8),
-                    request.razorpaySignature().getBytes(StandardCharsets.UTF_8)
+                    signature.getBytes(StandardCharsets.UTF_8)
             )) {
-                throw new PaymentVerificationException("Payment signature is invalid.");
+                throw new PaymentVerificationException(failureMessage);
             }
         } catch (PaymentVerificationException exception) {
             throw exception;
         } catch (Exception exception) {
-            throw new PaymentVerificationException("Unable to verify payment signature.");
+            throw new PaymentVerificationException(failureMessage);
         }
+    }
+
+    static CapturedPayment readCapturedPayment(JSONObject paymentJson) {
+        String paymentId = paymentJson.optString("id");
+        String orderId = paymentJson.optString("order_id");
+        String currency = paymentJson.optString("currency");
+        String status = paymentJson.optString("status");
+        long amount = paymentJson.optLong("amount", -1);
+
+        if (paymentId.isBlank() || orderId.isBlank() || currency.isBlank()
+                || status.isBlank() || amount <= 0) {
+            throw new PaymentVerificationException("Razorpay payment details are invalid.");
+        }
+
+        return new CapturedPayment(paymentId, orderId, amount, currency, status);
+    }
+
+    private static boolean isCompletedPaymentStatus(String status) {
+        return "captured".equals(status) || "paid".equals(status);
     }
 
     private List<CheckoutItem> mergeItems(List<CheckoutItem> items) {
@@ -382,5 +560,8 @@ public class OrderService {
     }
 
     private record CartCalculation(List<CartProduct> products, long subtotal) {
+    }
+
+    record CapturedPayment(String paymentId, String orderId, long amount, String currency, String status) {
     }
 }
