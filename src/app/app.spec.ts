@@ -21,7 +21,7 @@ describe('App', () => {
   ];
 
   beforeEach(async () => {
-    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    window.history.replaceState(null, '', '/');
     window.localStorage.removeItem(cartStorageKey);
     delete (window as Window & { Razorpay?: unknown }).Razorpay;
 
@@ -74,6 +74,26 @@ describe('App', () => {
     expect(compiled.textContent).toContain('Necklaces');
     expect(compiled.textContent).toContain('Flat Rs. 45 shipping per order');
     expect(compiled.textContent).not.toContain('+ Rs. 45 shipping');
+    expect(compiled.querySelectorAll('.policy-links a').length).toBe(4);
+  });
+
+  it('should render a policy page directly without loading products', async () => {
+    window.history.replaceState(null, '', '/privacy-policy');
+    const getActiveProducts = jasmine.createSpy('getActiveProducts').and.resolveTo(PRODUCTS);
+    TestBed.overrideProvider(ProductService, {
+      useValue: {
+        getActiveProducts,
+        createPaymentOrder: () => Promise.reject(new Error('Not used')),
+        verifyPayment: () => Promise.reject(new Error('Not used')),
+      },
+    });
+
+    const { compiled } = await renderApp();
+
+    expect(compiled.querySelector('h1')?.textContent).toContain('Privacy Policy');
+    expect(compiled.textContent).toContain('Payment processing is handled by Razorpay');
+    expect(compiled.querySelectorAll('.policy-footer a').length).toBe(4);
+    expect(getActiveProducts).not.toHaveBeenCalled();
   });
 
   it('should open product details with gallery images', async () => {

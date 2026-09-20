@@ -1,5 +1,13 @@
 @if (isAdminRoute()) {
   <app-admin />
+} @else if (activePolicy(); as policy) {
+  <app-policy-page
+    [policy]="policy"
+    [contactEmail]="contactEmail"
+    [contactEmailHref]="contactEmailHref"
+    [contactPhone]="contactPhone"
+    [contactPhoneHref]="contactPhoneHref"
+  />
 } @else {
 <main class="shop-shell">
   <header class="brand-header">
@@ -217,6 +225,20 @@
       <a [href]="instagramHref" target="_blank" rel="noopener">Instagram</a>
     </div>
   </section>
+
+  <footer class="store-footer" aria-label="Store information and policies">
+    <div class="business-details">
+      <strong>Amavya</strong>
+      <span>Online jewellery store</span>
+      <span>Business address pending merchant confirmation</span>
+    </div>
+    <nav class="policy-links" aria-label="Policies">
+      <a href="/privacy-policy">Privacy Policy</a>
+      <a href="/terms-and-conditions">Terms and Conditions</a>
+      <a href="/refund-cancellation-policy">Refund and Cancellation</a>
+      <a href="/shipping-delivery-policy">Shipping and Delivery</a>
+    </nav>
+  </footer>
 
   @if (selectedProduct(); as product) {
     <section class="product-modal" aria-label="Product details">

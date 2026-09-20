@@ -1,0 +1,54 @@
+<main class="policy-shell">
+  <header class="policy-header">
+    <a class="brand-lockup" href="/" aria-label="Amavya home">
+      <img src="assets/amavya-logo.jpeg" alt="Amavya logo" />
+      <span>
+        <strong>Amavya</strong>
+        <small>Adorn your aura</small>
+      </span>
+    </a>
+    <a class="shop-link" href="/">Back to shop</a>
+  </header>
+
+  <article class="policy-content">
+    <p class="eyebrow">Store policy</p>
+    <h1>{{ policy.title }}</h1>
+    <p class="policy-summary">{{ policy.summary }}</p>
+    <p class="effective-date">Effective date: 20 September 2026</p>
+
+    @for (section of policy.sections; track section.heading) {
+      <section>
+        <h2>{{ section.heading }}</h2>
+        @for (paragraph of section.paragraphs ?? []; track paragraph) {
+          <p>{{ paragraph }}</p>
+        }
+        @if (section.points?.length) {
+          <ul>
+            @for (point of section.points; track point) {
+              <li>{{ point }}</li>
+            }
+          </ul>
+        }
+      </section>
+    }
+
+    <section class="policy-contact">
+      <h2>Contact Amavya</h2>
+      <p>Questions or requests about this policy can be sent to:</p>
+      <address>
+        <strong>Amavya</strong><br />
+        Email: <a [href]="contactEmailHref">{{ contactEmail }}</a><br />
+        Phone: <a [href]="contactPhoneHref">{{ contactPhone }}</a><br />
+        Business and return address: contact us for the current correspondence or approved return
+        address.
+      </address>
+    </section>
+  </article>
+
+  <footer class="policy-footer" aria-label="Store policies">
+    <a href="/privacy-policy">Privacy Policy</a>
+    <a href="/terms-and-conditions">Terms and Conditions</a>
+    <a href="/refund-cancellation-policy">Refund and Cancellation</a>
+    <a href="/shipping-delivery-policy">Shipping and Delivery</a>
+  </footer>
+</main>

@@ -524,6 +524,40 @@ h1 {
   font-weight: 800;
 }
 
+.store-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 26px;
+  border-top: 1px solid rgba(62, 24, 49, 0.12);
+  padding-top: 24px;
+}
+
+.business-details {
+  display: grid;
+  gap: 5px;
+  color: #6e4a5f;
+  font-size: 0.9rem;
+}
+
+.business-details strong {
+  color: #35152b;
+}
+
+.policy-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px 18px;
+  max-width: 620px;
+}
+
+.policy-links a {
+  color: #3b182f;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
 .product-modal {
   position: fixed;
   inset: 0;
@@ -705,6 +739,15 @@ h1 {
   }
 
   .contact-links {
+    justify-content: flex-start;
+  }
+
+  .store-footer {
+    display: grid;
+  }
+
+  .policy-links {
+    display: grid;
     justify-content: flex-start;
   }
 

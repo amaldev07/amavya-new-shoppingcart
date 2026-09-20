@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminComponent } from './admin.component';
+import { PolicyPageComponent } from './policy-page.component';
+import { PolicyPage, policyForPath } from './policies';
 import { PaymentOrder, ProductService, RazorpayPaymentResult } from './product.service';
 import { Category, Product } from './products';
 
@@ -69,7 +71,7 @@ const RAZORPAY_CHECKOUT_SCRIPT_URL = 'https://checkout.razorpay.com/v1/checkout.
 
 @Component({
   selector: 'app-root',
-  imports: [FormsModule, AdminComponent],
+  imports: [FormsModule, AdminComponent, PolicyPageComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -86,6 +88,7 @@ export class App implements OnInit, OnDestroy {
   ];
   protected readonly products = signal<Product[]>([]);
   protected readonly isAdminRoute = signal(false);
+  protected readonly activePolicy = signal<PolicyPage | null>(null);
   protected readonly selectedCategory = signal<Category | 'All'>('All');
   protected readonly selectedProduct = signal<Product | null>(null);
   protected readonly cart = signal<CartItem[]>([]);
@@ -132,7 +135,10 @@ export class App implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.syncRoute();
-    void this.loadProducts();
+
+    if (!this.isAdminRoute() && !this.activePolicy()) {
+      void this.loadProducts();
+    }
     this.syncProductFromUrl();
     window.addEventListener('popstate', this.syncProductFromUrl);
     window.addEventListener('hashchange', this.syncProductFromUrl);
@@ -159,6 +165,7 @@ export class App implements OnInit, OnDestroy {
 
   private readonly syncRoute = (): void => {
     this.isAdminRoute.set(window.location.pathname.startsWith('/admin'));
+    this.activePolicy.set(policyForPath(window.location.pathname));
   };
 
   protected selectCategory(category: Category | 'All'): void {
