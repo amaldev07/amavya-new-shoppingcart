@@ -9,6 +9,15 @@
 </div>
 <div class="orders-layout" [class.has-selection]="selected()">
   <section class="orders-panel" aria-label="Customer orders">
+    @if (loading()) {
+      <div class="orders-loader" role="status" aria-live="polite">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <div>
+          <strong>Fetching customer orders...</strong>
+          <span>Please wait while we load the latest order information.</span>
+        </div>
+      </div>
+    }
     <div class="toolbar">
       <label class="search"><span>Search loaded orders</span><input type="search" placeholder="Customer, phone, order ID or product…" [ngModel]="search()" (ngModelChange)="search.set($event)" /></label>
       <label><span>Payment status</span><select [ngModel]="filter()" (ngModelChange)="filter.set($event)"><option value="paid">Paid orders</option><option value="all">All orders</option><option value="pending">Awaiting payment</option><option value="failed">Payment failed</option></select></label>
