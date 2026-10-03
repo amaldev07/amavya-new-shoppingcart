@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import type { User } from 'firebase/auth';
 import { AdminProduct, AdminService, ProductDraft } from './admin.service';
 import { Category } from './products';
+import { AdminOrdersComponent } from './admin-orders.component';
 
 const EMPTY_DRAFT: ProductDraft = {
   id: null,
@@ -19,7 +20,7 @@ const EMPTY_DRAFT: ProductDraft = {
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule],
+  imports: [FormsModule, AdminOrdersComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.css',
 })
@@ -27,6 +28,7 @@ export class AdminComponent implements OnInit {
   private readonly adminService = inject(AdminService);
 
   protected readonly categories: Category[] = ['Necklaces', 'Earrings', 'Bracelets', 'Bangles'];
+  protected readonly activeTab = signal<'orders' | 'products'>('orders');
   protected readonly user = signal<User | null>(null);
   protected readonly products = signal<AdminProduct[]>([]);
   protected readonly selectedFiles = signal<File[]>([]);

@@ -43,6 +43,14 @@
       }
     </section>
   } @else {
+    <nav class="admin-navigation" aria-label="Admin sections">
+      <button type="button" [class.active]="activeTab() === 'orders'" [attr.aria-current]="activeTab() === 'orders' ? 'page' : null" (click)="activeTab.set('orders')">Orders</button>
+      <button type="button" [class.active]="activeTab() === 'products'" [attr.aria-current]="activeTab() === 'products' ? 'page' : null" (click)="activeTab.set('products')">Products</button>
+      <span>Store administration</span>
+    </nav>
+    @if (activeTab() === 'orders') {
+      <app-admin-orders />
+    } @else {
     <div class="admin-grid">
       <section class="admin-panel product-form-panel">
         <div class="section-title">
@@ -204,5 +212,6 @@
         </div>
       </section>
     </div>
+    }
   }
 </main>

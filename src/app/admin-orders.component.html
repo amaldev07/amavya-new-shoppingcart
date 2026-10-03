@@ -1,0 +1,49 @@
+<header class="orders-heading">
+  <div><p class="eyebrow">Your store, at a glance</p><h1>Customer orders</h1><p class="muted">Review purchases, payment details and delivery information.</p></div>
+  <button type="button" class="button" [disabled]="loading()" (click)="load()">{{ loading() ? 'Loading…' : 'Refresh orders' }}</button>
+</header>
+<div class="order-summary">
+  <div><span>Orders loaded</span><strong>{{ orders().length }}</strong></div>
+  <div><span>Paid orders</span><strong>{{ paidCount() }}</strong></div>
+  <div><span>Awaiting successful payment</span><strong>{{ orders().length - paidCount() }}</strong></div>
+</div>
+<div class="orders-layout" [class.has-selection]="selected()">
+  <section class="orders-panel" aria-label="Customer orders">
+    <div class="toolbar">
+      <label class="search"><span>Search loaded orders</span><input type="search" placeholder="Customer, phone, order ID or product…" [ngModel]="search()" (ngModelChange)="search.set($event)" /></label>
+      <label><span>Payment status</span><select [ngModel]="filter()" (ngModelChange)="filter.set($event)"><option value="paid">Paid orders</option><option value="all">All orders</option><option value="pending">Awaiting payment</option><option value="failed">Payment failed</option></select></label>
+    </div>
+    @if (error()) { <div class="error" role="alert">{{ error() }} <button class="button" type="button" [disabled]="loading()" (click)="load()">Retry</button></div> }
+    <div class="table-scroll" [attr.aria-busy]="loading()">
+      <table>
+        <thead><tr><th scope="col">Order / Date (IST)</th><th scope="col">Customer</th><th scope="col">Items</th><th scope="col">Total</th><th scope="col">Payment</th><th scope="col"><span class="sr-only">Details</span></th></tr></thead>
+        <tbody>
+          @for (order of visibleOrders(); track order.id) {
+            <tr [class.selected]="selectedId() === order.id">
+              <td><strong class="order-id">{{ order.id }}</strong><small>{{ order.createdAt | date:'dd MMM yyyy, h:mm a':'+0530' }}</small></td>
+              <td><strong>{{ order.customer.name }}</strong><small>{{ order.customer.phone }}</small></td>
+              <td>{{ itemCount(order) }}</td>
+              <td class="money">{{ order.amount / 100 | currency:order.currency:'symbol':'1.2-2' }}</td>
+              <td><span class="badge" [class.paid]="status(order) === 'paid'" [class.failed]="status(order) === 'failed'">{{ statusLabel(order) }}</span></td>
+              <td><button class="view-button" type="button" [attr.aria-label]="'View order ' + order.id" [attr.aria-expanded]="selectedId() === order.id" (click)="selectedId.set(order.id)">View →</button></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="empty-state">@if (loading()) { Loading customer orders… } @else if (error()) { Orders could not be refreshed. } @else { <strong>{{ orders().length ? 'No matching orders' : 'No orders yet' }}</strong><p>{{ orders().length ? 'Try another search or payment status. Load older orders below to search further.' : 'Customer checkouts will appear here once an order is created.' }}</p> }</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <footer class="table-footer"><span aria-live="polite">Showing {{ visibleOrders().length }} of {{ orders().length }} loaded orders · Newest first</span>@if (nextCursor()) { <button class="button" type="button" [disabled]="loading()" (click)="load(true)">Load older orders</button> }</footer>
+  </section>
+  @if (selected(); as order) {
+    <aside class="detail-panel" aria-label="Order details">
+      <div class="detail-heading"><div><p class="eyebrow">Order details</p><h2>{{ order.customer.name }}</h2></div><button type="button" class="close-button" aria-label="Close order details" (click)="selectedId.set(null)">×</button></div>
+      <span class="badge" [class.paid]="status(order) === 'paid'" [class.failed]="status(order) === 'failed'">{{ statusLabel(order) }}</span>
+      <section><h3>Customer & delivery</h3><a [href]="'tel:' + order.customer.phone">{{ order.customer.phone }}</a><p class="preserve-lines">{{ order.customer.address }}</p>@if (order.customer.note) { <div class="customer-note"><strong>Customer note</strong><p class="preserve-lines">{{ order.customer.note }}</p></div> }</section>
+      <section><h3>Purchased items</h3>@for (item of order.items; track $index) { <div class="line-item"><div><strong>{{ item.name }}</strong><small>{{ item.quantity }} × {{ item.price | currency:order.currency }}</small></div><span>{{ item.quantity * item.price | currency:order.currency }}</span></div> }
+        <dl class="totals"><div><dt>Subtotal</dt><dd>{{ order.subtotal | currency:order.currency }}</dd></div><div><dt>Shipping</dt><dd>{{ order.shipping | currency:order.currency }}</dd></div><div class="total"><dt>Total</dt><dd>{{ order.amount / 100 | currency:order.currency }}</dd></div></dl>
+      </section>
+      <section><h3>Payment information</h3><dl class="payment-details"><dt>Order ID</dt><dd>{{ order.id }}</dd><dt>Receipt</dt><dd>{{ order.receipt }}</dd><dt>Created (IST)</dt><dd>{{ order.createdAt | date:'dd MMM yyyy, h:mm a':'+0530' }}</dd>@if (order.razorpayPaymentId) { <dt>Payment ID</dt><dd>{{ order.razorpayPaymentId }}</dd> }@if (order.paidAt) { <dt>Paid (IST)</dt><dd>{{ order.paidAt | date:'dd MMM yyyy, h:mm a':'+0530' }}</dd> }@if (order.lastFailedPaymentId) { <dt>Last failed attempt</dt><dd>{{ order.lastFailedPaymentId }}</dd> }</dl></section>
+    </aside>
+  }
+</div>

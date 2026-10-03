@@ -5,6 +5,27 @@ import { hasCloudinaryConfig } from '../environments/cloudinary.config';
 import { STORE_ID, firebaseConfig, hasFirebaseConfig } from '../environments/firebase.config';
 import { Category, Product } from './products';
 
+export interface AdminOrder {
+  id: string;
+  receipt: string;
+  status: string;
+  amount: number;
+  currency: string;
+  subtotal: number;
+  shipping: number;
+  createdAt: string | null;
+  paidAt: string | null;
+  razorpayPaymentId: string | null;
+  lastFailedPaymentId: string | null;
+  customer: { name: string; phone: string; address: string; note: string };
+  items: { productId: number; name: string; quantity: number; price: number }[];
+}
+
+export interface AdminOrderPage {
+  orders: AdminOrder[];
+  nextCursor: string;
+}
+
 export interface AdminProduct extends Product {
   active: boolean;
   cloudinaryPublicIds: string[];
@@ -42,6 +63,24 @@ interface CloudinarySignature {
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
+  async getOrders(cursor = ''): Promise<AdminOrderPage> {
+    const { getAuth } = await import('firebase/auth');
+    const user = getAuth(await this.getApp()).currentUser;
+    if (!user) throw new Error('Sign in to view customer orders.');
+    const token = await user.getIdToken();
+    const suffix = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+    const response = await fetch(`${backendConfig.apiBaseUrl}/api/admin/orders${suffix}`, {
+      headers: { authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error(response.status === 401 || response.status === 403
+        ? 'Your session cannot access orders. Please sign in again.'
+        : 'Unable to load orders. Check that the backend is available, then retry.');
+    }
+    return response.json() as Promise<AdminOrderPage>;
+  }
+
   async signIn(email: string, password: string): Promise<User> {
     const { getAuth, signInWithEmailAndPassword } = await import('firebase/auth');
     const auth = getAuth(await this.getApp());

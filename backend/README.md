@@ -9,6 +9,22 @@ Small Spring Boot API for secure Cloudinary operations and Razorpay checkout.
 - `POST /api/orders/payment-order`
 - `POST /api/orders/verify-payment`
 - `POST /api/orders/razorpay-webhook`
+- `GET /api/admin/orders` (Firebase bearer token required; optional `cursor` query parameter)
+
+The admin dashboard's Orders tab reads existing `paymentOrders` records through the backend.
+Results are newest first, with 50 orders per page and a `nextCursor` for older orders.
+Order amounts are in paise; item prices, subtotal and shipping are in rupees. Dates are
+returned as ISO timestamps and displayed in IST. Responses use `Cache-Control: no-store`.
+
+This endpoint follows the existing admin authentication model: authenticated Firebase
+accounts are trusted administrators. Keep Firebase accounts restricted to store staff;
+introducing customer accounts requires role-based authorization for all admin tools.
+Order records remain inaccessible through client Firestore rules.
+
+Deploy the backend and frontend together for this feature. No Firestore rule changes or
+order migration are needed. The UI defaults to paid orders; filters and search apply to
+loaded pages. Use **Load older orders** to include earlier records. Test and live orders
+cannot be distinguished in the dashboard because existing records do not store payment mode.
 
 Cloudinary endpoints require:
 
